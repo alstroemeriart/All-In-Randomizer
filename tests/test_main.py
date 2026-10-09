@@ -1,20 +1,19 @@
-import unittest
-import sys
-from pathlib import Path
-from unittest.mock import patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import unittest
+from unittest.mock import patch
 
 from all_in_randomizer.main import main
 
 
 class TestMain(unittest.TestCase):
+
+    @patch("builtins.input", return_value="0")
     @patch("builtins.print")
-    def test_main_prints_welcome_message(self, mock_print):
+    def test_main_prints_welcome_message(self, mocked_print, mocked_input):
         main()
-        mock_print.assert_called_once_with(
-            "Welcome to All-in Randomizer!"
-        )
+
+        mocked_print.assert_any_call("Welcome to All-in Randomizer!")
+        mocked_input.assert_called_once_with("Choose an option: ")
 
 
 if __name__ == "__main__":
