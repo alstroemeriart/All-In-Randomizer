@@ -20,22 +20,20 @@ class TestMain(unittest.TestCase):
             any("Invalid category" in str(call) for call in mock_print.call_args_list)
         )
 
-    @patch("builtins.input", side_effect=["7", "", "0"])
-    @patch("builtins.print")
-    def test_planned_category_is_marked_not_implemented(
-        self, mock_print, mock_input
-    ):
-        main()
+    @patch("builtins.input", side_effect=["8", "", "0"])
+    def test_planned_category_is_marked_not_implemented(self, mock_input):
+        with patch("builtins.print") as mock_print:
+            main()
 
-        printed_messages = [
-            str(call) for call in mock_print.call_args_list
-        ]
+        printed_text = "\n".join(
+            str(call.args[0])
+            for call in mock_print.call_args_list
+            if call.args
+        )
 
-        self.assertTrue(
-            any(
-                "not implemented" in message.lower()
-                for message in printed_messages
-            )
+        self.assertIn(
+            "Social Themed Randomizers is planned but not implemented yet.",
+            printed_text,
         )
 
     @patch("builtins.input", side_effect=["1", "b", "0"])
@@ -65,6 +63,21 @@ class TestMain(unittest.TestCase):
         main()
         mock_generator.assert_called_once_with(5)
         mock_print.assert_any_call("Result: 00421")
+
+    @patch("builtins.input", side_effect=["7", "1", "", "b", "0"])
+    def test_runs_standard_card_deck_from_cards_menu(self, mock_input):
+        with patch("builtins.print") as mock_print:
+            main()
+
+        printed_text = "\n".join(
+            str(call.args[0])
+            for call in mock_print.call_args_list
+            if call.args
+        )
+
+        self.assertIn("Standard deck (52 cards):", printed_text)
+        self.assertIn("Ace of Hearts", printed_text)
+        self.assertIn("King of Spades", printed_text)
 
 
 if __name__ == "__main__":

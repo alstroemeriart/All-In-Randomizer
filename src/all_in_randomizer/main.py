@@ -49,6 +49,12 @@ from all_in_randomizer.randomizers.fortune import (
 from all_in_randomizer.randomizers.tournament import (
     generate_tournament_draw,
 )
+from all_in_randomizer.randomizers.cards import (
+    create_standard_deck,
+    shuffle_deck,
+    draw_cards,
+    deal_hands,
+)
 
 # Each category lists only the randomizers that are implemented so far.
 CATEGORIES = {
@@ -99,7 +105,12 @@ CATEGORIES = {
         ("1", "Generate a single-elimination draw"),
         ("2", "Generate a double-elimination draw"),
     ]),
-    "7": ("Cards", []),
+    "7": ("Cards", [
+        ("1", "Create and display a standard deck"),
+        ("2", "Shuffle a standard deck"),
+        ("3", "Draw cards"),
+        ("4", "Deal hands to multiple players"),
+    ]),
     "8": ("Social Themed Randomizers", []),
     "9": ("Writing", []),
     "10": ("Games", []),
@@ -341,7 +352,49 @@ def _run_randomizer(category: str, option: str) -> None:
                 )
 
         print(result["note"])
+    
+        # CARDS RANDOMIZER
+    elif category == "7":
+        if option == "1":
+            deck = create_standard_deck()
+            print(f"Standard deck ({len(deck)} cards):")
 
+            for rank, suit in deck:
+                print(f"{rank} of {suit}")
+
+        elif option == "2":
+            deck = shuffle_deck()
+            print("Shuffled deck:")
+
+            for rank, suit in deck:
+                print(f"{rank} of {suit}")
+
+        elif option == "3":
+            deck = shuffle_deck()
+            count = int(input("How many cards would you like to draw? "))
+            drawn_cards = draw_cards(deck, count)
+
+            print("Drawn cards:")
+            for rank, suit in drawn_cards:
+                print(f"{rank} of {suit}")
+
+            print(f"Cards remaining: {len(deck)}")
+
+        elif option == "4":
+            deck = shuffle_deck()
+            player_count = int(input("Number of players: "))
+            cards_per_player = int(input("Cards per player: "))
+
+            hands = deal_hands(deck, player_count, cards_per_player)
+
+            for index, hand in enumerate(hands, start=1):
+                formatted_hand = ", ".join(
+                    f"{rank} of {suit}"
+                    for rank, suit in hand
+                )
+                print(f"Player {index}: {formatted_hand}")
+
+            print(f"Cards remaining: {len(deck)}")
 
 def main() -> None:
     """Run the category-based All-in Randomizer command-line menu."""
