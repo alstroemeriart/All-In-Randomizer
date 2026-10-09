@@ -61,6 +61,12 @@ from all_in_randomizer.randomizers.writing import (
     generate_genre_prompt,
     generate_dnd_character,
 )
+from all_in_randomizer.randomizers.games import (
+    DEFAULT_RARITIES,
+    DEFAULT_WEIGHTS,
+    simulate_gacha,
+    summarize_gacha,
+)
 
 # Each category lists only the randomizers that are implemented so far.
 CATEGORIES = {
@@ -119,12 +125,19 @@ CATEGORIES = {
     ]),
     "8": ("Social Themed Randomizers", []),
     "9": ("Writing", [
-    ("1", "Name Generator"),
-    ("2", "Story Prompt"),
-    ("3", "Genre Prompt"),
-    ("4", "D&D Character Generator"),
+        ("1", "Name Generator"),
+        ("2", "Story Prompt"),
+        ("3", "Genre Prompt"),
+        ("4", "D&D Character Generator"),
     ]),
-    "10": ("Games", []),
+    "10": ("Games", [
+        ("1", "Pseudo Gacha Game"),
+        ("2", "Slot Machines"),
+        ("3", "Roulette"),
+        ("4", "Claw Machines"),
+        ("5", "Three Cups Game"),
+        ("6", "Metronome (Pokémon)"),
+    ]),
     "11": ("Miscellaneous", []),
 }
 
@@ -427,6 +440,65 @@ def _run_randomizer(category: str, option: str) -> None:
             print("\nGenerated D&D Character")
             for field, value in character.items():
                 print(f"{field.replace('_', ' ').title()}: {value}")
+
+        # GAMES
+    elif category == "10":
+        if option == "1":
+            print("\nPseudo Gacha Game")
+            print("1. Use default rarity rates")
+            print("2. Enter custom rarity rates")
+
+            rate_choice = input("Choose a rate option: ").strip()
+
+            if rate_choice == "1":
+                rarities = DEFAULT_RARITIES
+                weights = DEFAULT_WEIGHTS
+
+            elif rate_choice == "2":
+                rarities = tuple(
+                    item.strip()
+                    for item in input(
+                        "Enter rarity names, separated by commas: "
+                    ).split(",")
+                    if item.strip()
+                )
+
+                if not rarities:
+                    print("You must enter at least one rarity.")
+                    return
+
+                try:
+                    weights = tuple(
+                        float(item.strip())
+                        for item in input(
+                            "Enter the matching weights, separated by commas: "
+                        ).split(",")
+                    )
+                except ValueError:
+                    print("Weights must be numbers.")
+                    return
+
+            else:
+                print("Invalid rate option.")
+                return
+
+            try:
+                pull_count = int(input("Number of pulls: "))
+                results = simulate_gacha(pull_count, rarities, weights)
+            except (ValueError, TypeError) as error:
+                print(f"Could not simulate pulls: {error}")
+                return
+
+            print("\nPull Results:")
+            for index, rarity in enumerate(results, start=1):
+                print(f"Pull {index}: {rarity}")
+
+            print("\nSummary:")
+            summary = summarize_gacha(results, rarities)
+
+            for rarity, count in summary.items():
+                percentage = count / len(results) * 100
+                print(f"{rarity}: {count} ({percentage:.1f}%)")
             
 def main() -> None:
     """Run the category-based All-in Randomizer command-line menu."""
