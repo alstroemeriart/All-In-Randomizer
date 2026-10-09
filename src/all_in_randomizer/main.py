@@ -55,6 +55,12 @@ from all_in_randomizer.randomizers.cards import (
     draw_cards,
     deal_hands,
 )
+from all_in_randomizer.randomizers.writing import (
+    generate_name,
+    generate_story_prompt,
+    generate_genre_prompt,
+    generate_dnd_character,
+)
 
 # Each category lists only the randomizers that are implemented so far.
 CATEGORIES = {
@@ -112,7 +118,12 @@ CATEGORIES = {
         ("4", "Deal hands to multiple players"),
     ]),
     "8": ("Social Themed Randomizers", []),
-    "9": ("Writing", []),
+    "9": ("Writing", [
+    ("1", "Name Generator"),
+    ("2", "Story Prompt"),
+    ("3", "Genre Prompt"),
+    ("4", "D&D Character Generator"),
+    ]),
     "10": ("Games", []),
     "11": ("Miscellaneous", []),
 }
@@ -396,6 +407,27 @@ def _run_randomizer(category: str, option: str) -> None:
 
             print(f"Cards remaining: {len(deck)}")
 
+        # WRITING RANDOMIZERS
+    elif category == "9":
+        if option == "1":
+            name = generate_name()
+            print(f"Generated name: {name}")
+
+        elif option == "2":
+            prompt = generate_story_prompt()
+            print(f"Story prompt: {prompt}")
+
+        elif option == "3":
+            genre = generate_genre_prompt()
+            print(f"Genre prompt: {genre}")
+
+        elif option == "4":
+            character = generate_dnd_character()
+
+            print("\nGenerated D&D Character")
+            for field, value in character.items():
+                print(f"{field.replace('_', ' ').title()}: {value}")
+            
 def main() -> None:
     """Run the category-based All-in Randomizer command-line menu."""
     print("Welcome to All-in Randomizer!")
