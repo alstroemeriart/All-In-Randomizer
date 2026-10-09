@@ -18,11 +18,8 @@ def roll_die(sides: int) -> int:
 
 
 def roll_dice(number_of_dice: int, sides: int) -> dict:
-    """Roll multiple dice and return the rolls and their total."""
-    if (
-        not isinstance(number_of_dice, int)
-        or isinstance(number_of_dice, bool)
-    ):
+    """Roll multiple dice and return their individual results and total."""
+    if not isinstance(number_of_dice, int) or isinstance(number_of_dice, bool):
         raise TypeError("Number of dice must be an integer.")
 
     if number_of_dice < 1:
@@ -51,21 +48,34 @@ def roll_standard_die(sides: int) -> int:
 
 
 def roll_notation(notation: str) -> dict:
-    """Roll basic dice notation such as '3d6' or 'd20'."""
+    """Roll basic notation such as '3d6' or 'd20'."""
     if not isinstance(notation, str):
         raise TypeError("Dice notation must be a string.")
 
-    notation = notation.strip().lower()
-    match = re.fullmatch(r"(\d*)d(\d+)", notation)
+    match = re.fullmatch(r"\s*(\d*)d(\d+)\s*", notation.lower())
 
     if match is None:
         raise ValueError(
-            "Invalid notation. Use a format such as '3d6' or 'd20'."
+            "Invalid dice notation. Use a format such as '3d6' or 'd20'."
         )
 
     number_text, sides_text = match.groups()
-
     number_of_dice = int(number_text) if number_text else 1
     sides = int(sides_text)
 
     return roll_dice(number_of_dice, sides)
+
+
+def roll_dnd_stats() -> dict:
+    """Generate six D&D-style ability scores using 4d6 drop lowest."""
+    scores = []
+
+    for _ in range(6):
+        rolls = sorted(roll_dice(4, 6)["rolls"])
+        score = sum(rolls[1:])
+        scores.append(score)
+
+    return {
+        "scores": scores,
+        "total": sum(scores),
+    }

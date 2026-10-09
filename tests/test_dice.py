@@ -7,6 +7,7 @@ from all_in_randomizer.randomizers.dice import (
     roll_dice,
     roll_standard_die,
     roll_notation,
+    roll_dnd_stats,
 )
 
 
@@ -92,6 +93,22 @@ class TestDice(unittest.TestCase):
     def test_notation_rejects_non_string(self):
         with self.assertRaises(TypeError):
             roll_notation(123)
+
+    
+    def test_dnd_stats_generates_six_scores(self):
+        result = roll_dnd_stats()
+        self.assertEqual(len(result["scores"]), 6)
+
+    def test_dnd_stats_scores_are_valid(self):
+        result = roll_dnd_stats()
+
+        for score in result["scores"]:
+            self.assertGreaterEqual(score, 3)
+            self.assertLessEqual(score, 18)
+
+    def test_dnd_stats_total_matches_scores(self):
+        result = roll_dnd_stats()
+        self.assertEqual(result["total"], sum(result["scores"]))
 
 
 if __name__ == "__main__":
