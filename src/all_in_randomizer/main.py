@@ -52,8 +52,9 @@ from all_in_randomizer.randomizers.fortune import (
 )
 from all_in_randomizer.randomizers.tournament import (
     generate_tournament_draw,
+    record_match_winner,
+    generate_next_round,
 )
-
 from all_in_randomizer.randomizers.cards import (
     create_standard_deck,
     shuffle_deck,
@@ -403,6 +404,8 @@ def _run_randomizer(category: str, option: str) -> None:
                 print(f"{participant}: {role}")
 
         # TOURNAMENT RANDOMIZER
+    
+    # TOURNAMENT RANDOMIZER
     elif category == "6":
         if option == "1":
             tournament_format = "single elimination"
@@ -423,24 +426,96 @@ def _run_randomizer(category: str, option: str) -> None:
         print(f"\nFormat: {result['format']}")
         print(f"Participants: {', '.join(result['participants'])}")
         print(f"Byes: {result['bye_count']}")
-        print(f"Opening round ({len(result['opening_round'])} matchups):")
 
-        for match in result["opening_round"]:
-            participant_1 = match["participant_1"]
-            participant_2 = match["participant_2"]
+        current_round = result["opening_round"]
 
-            if match["bye"]:
-                print(
-                    f"Match {match['match']}: "
-                    f"{participant_1} advances with a BYE"
-                )
-            else:
-                print(
-                    f"Match {match['match']}: "
-                    f"{participant_1} vs {participant_2}"
-                )
+        # Single elimination: play every round until one champion remains.
+        if option == "1":
+            round_number = 1
 
-        print(result["note"])
+            while current_round:
+                print(f"\n--- Round {round_number} ---")
+
+                for match in current_round:
+                    participant_1 = match["participant_1"]
+                    participant_2 = match["participant_2"]
+
+                    if match["bye"]:
+                        print(
+                            f"{participant_1} advances with a BYE."
+                        )
+                        continue
+
+                    print(f"\nMatch {match['match']}:")
+                    print(f"1. {participant_1}")
+                    print(f"2. {participant_2}")
+
+                    while True:
+                        choice = input(
+                            "Enter 1, 2, or the winner's name: "
+                        ).strip()
+
+                        if choice == "1":
+                            winner = participant_1
+                        elif choice == "2":
+                            winner = participant_2
+                        elif choice.casefold() == participant_1.casefold():
+                            winner = participant_1
+                        elif choice.casefold() == participant_2.casefold():
+                            winner = participant_2
+                        else:
+                            print(
+                                "Invalid winner. Enter 1, 2, "
+                                "or one of the participant names."
+                            )
+                            continue
+
+                        record_match_winner(match, winner)
+                        print(f"Winner: {winner}")
+                        break
+
+                winners = [
+                    match["winner"]
+                    for match in current_round
+                ]
+
+                if len(winners) == 1:
+                    champion = winners[0]
+                    break
+
+                current_round = generate_next_round(current_round)
+                round_number += 1
+
+            print("\n" + "=" * 35)
+            print("TOURNAMENT COMPLETE")
+            print("=" * 35)
+            print(f"Champion: {champion}")
+
+        # Double elimination remains an opening-draw-only feature for now.
+        else:
+            print(
+                f"Opening round ({len(current_round)} matchups):"
+            )
+
+            for match in current_round:
+                participant_1 = match["participant_1"]
+                participant_2 = match["participant_2"]
+
+                if match["bye"]:
+                    print(
+                        f"Match {match['match']}: "
+                        f"{participant_1} advances with a BYE"
+                    )
+                else:
+                    print(
+                        f"Match {match['match']}: "
+                        f"{participant_1} vs {participant_2}"
+                    )
+
+            print(
+                "Double-elimination match progression "
+                "will be integrated in the next step."
+            )
     
         # CARDS RANDOMIZER
     elif category == "7":
