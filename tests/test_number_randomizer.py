@@ -2,7 +2,7 @@ import unittest
 from fractions import Fraction
 
 from all_in_randomizer.randomizers.numbers import (
-    generate_positive_integer,
+    generate_range_number,
     generate_numeric_string,
     generate_fraction,
     generate_coordinate,
@@ -11,14 +11,21 @@ from all_in_randomizer.randomizers.numbers import (
 
 class TestNumberRandomizers(unittest.TestCase):
 
-    def test_positive_integer_is_within_range(self):
-        result = generate_positive_integer(1, 10)
+    def test_positive_integer_stays_in_range(self):
+        result = generate_range_number(1, 10, "positive")
+        self.assertIsInstance(result, int)
         self.assertGreaterEqual(result, 1)
+        self.assertLessEqual(result, 10)
+
+    def test_integer_can_include_negative_values(self):
+        result = generate_range_number(-10, 10, "integer")
+        self.assertIsInstance(result, int)
+        self.assertGreaterEqual(result, -10)
         self.assertLessEqual(result, 10)
 
     def test_positive_integer_rejects_zero_minimum(self):
         with self.assertRaises(ValueError):
-            generate_positive_integer(0, 10)
+            generate_range_number(0, 10, "positive")
 
     def test_numeric_string_has_requested_length(self):
         result = generate_numeric_string(8)
@@ -37,6 +44,30 @@ class TestNumberRandomizers(unittest.TestCase):
     def test_numeric_string_rejects_zero_length(self):
         with self.assertRaises(ValueError):
             generate_numeric_string(0)
+
+    def test_decimal_stays_in_range(self):
+        result = generate_range_number(-2.5, 5.5, "decimal", 3)
+        self.assertIsInstance(result, float)
+        self.assertGreaterEqual(result, -2.5)
+        self.assertLessEqual(result, 5.5)
+
+    def test_fraction_stays_in_range(self):
+        result = generate_range_number(1, 3, "fraction")
+        self.assertIsInstance(result, Fraction)
+        self.assertGreaterEqual(result, 1)
+        self.assertLessEqual(result, 3)
+
+    def test_reversed_bounds_are_rejected(self):
+        with self.assertRaises(ValueError):
+            generate_range_number(10, 1, "integer")
+
+    def test_positive_mode_rejects_zero_minimum(self):
+        with self.assertRaises(ValueError):
+            generate_range_number(0, 10, "positive")
+
+    def test_unknown_mode_is_rejected(self):
+        with self.assertRaises(ValueError):
+            generate_range_number(1, 10, "unknown")
 
     def test_fraction_returns_fraction(self):
         result = generate_fraction(1, 10, 1, 5)

@@ -1,3 +1,6 @@
+import time
+import random
+
 from all_in_randomizer.randomizers.dice import (
     STANDARD_DICE,
     roll_dice,
@@ -21,6 +24,7 @@ from all_in_randomizer.randomizers.numbers import (
     generate_numeric_string,
     generate_fraction,
     generate_coordinate,
+    generate_range_number,
 )
 from all_in_randomizer.randomizers.graphics import (
     generate_hex_color,
@@ -49,11 +53,22 @@ from all_in_randomizer.randomizers.fortune import (
 from all_in_randomizer.randomizers.tournament import (
     generate_tournament_draw,
 )
+
 from all_in_randomizer.randomizers.cards import (
     create_standard_deck,
     shuffle_deck,
     draw_cards,
     deal_hands,
+    draw_single_card,
+    calculate_blackjack_score,
+    play_blackjack,
+    play_blackjack_interactive,
+    create_tarot_deck,
+    shuffle_tarot_deck,
+    draw_tarot_cards,
+    create_uno_deck,
+    shuffle_uno_deck,
+    draw_uno_cards,
 )
 from all_in_randomizer.randomizers.writing import (
     generate_name,
@@ -64,8 +79,12 @@ from all_in_randomizer.randomizers.writing import (
 from all_in_randomizer.randomizers.games import (
     DEFAULT_RARITIES,
     DEFAULT_WEIGHTS,
+    DEFAULT_CLAW_PRIZES,
     simulate_gacha,
     summarize_gacha,
+    play_claw_machine,
+    play_roulette,
+    spin_slot_machine,
 )
 
 # Each category lists only the randomizers that are implemented so far.
@@ -88,6 +107,7 @@ CATEGORIES = {
         ("6", "Generate a numeric string"),
         ("7", "Generate a fraction"),
         ("8", "Generate random coordinates"),
+        ("9", "Generate a number within a range"),
     ]),
     "3": ("Graphics", [
         ("1", "Generate a hex color"),
@@ -122,6 +142,12 @@ CATEGORIES = {
         ("2", "Shuffle a standard deck"),
         ("3", "Draw cards"),
         ("4", "Deal hands to multiple players"),
+        ("5", "Draw one random card"),
+        ("6", "Play Blackjack"),
+        ("7", "Create and shuffle a Tarot deck"),
+        ("8", "Draw Tarot cards"),
+        ("9", "Create and shuffle a UNO deck"),
+        ("10", "Draw UNO cards"),
     ]),
     "8": ("Social Themed Randomizers", []),
     "9": ("Writing", [
@@ -213,7 +239,7 @@ def _run_randomizer(category: str, option: str) -> None:
         elif option == "5":
             minimum = int(input("Minimum positive integer: "))
             maximum = int(input("Maximum positive integer: "))
-            print(f"Result: {generate_positive_integer(minimum, maximum)}")
+            print(f"Result: {generate_range_number(minimum, maximum, 'positive')}")
         elif option == "6":
             length = int(input("Number of digits: "))
             print(f"Result: {generate_numeric_string(length)}")
@@ -230,6 +256,45 @@ def _run_randomizer(category: str, option: str) -> None:
             result = generate_coordinate(places)
             print(f"Latitude: {result['latitude']}")
             print(f"Longitude: {result['longitude']}")
+        elif option == "9":
+            print("\nNumber range modes:")
+            print("1. Positive integers")
+            print("2. All integers")
+            print("3. Decimal numbers")
+            print("4. Fractions")
+
+            mode_choice = input("Choose a mode: ").strip()
+
+            modes = {
+                "1": "positive",
+                "2": "integer",
+                "3": "decimal",
+                "4": "fraction",
+            }
+
+            if mode_choice not in modes:
+                raise ValueError("Invalid number range mode.")
+
+            mode = modes[mode_choice]
+
+            if mode in ("positive", "integer"):
+                minimum = int(input("Minimum integer: "))
+                maximum = int(input("Maximum integer: "))
+            else:
+                minimum = float(input("Minimum value: "))
+                maximum = float(input("Maximum value: "))
+
+            if mode == "decimal":
+                decimal_places = int(input("Decimal places (0-10): "))
+                result = generate_range_number(
+                    minimum, maximum, mode, decimal_places
+                )
+            else:
+                result = generate_range_number(
+                    minimum, maximum, mode
+                )
+
+            print(f"Generated number: {result}")
 
     # GRAPHICS
     elif category == "3":
@@ -420,6 +485,54 @@ def _run_randomizer(category: str, option: str) -> None:
 
             print(f"Cards remaining: {len(deck)}")
 
+        elif option == "5":
+            deck = shuffle_deck()
+            card = draw_single_card(deck)
+            print(f"Your card: {card[0]} of {card[1]}")
+            print(f"Cards remaining: {len(deck)}")
+
+        
+        elif option == "6":
+            play_blackjack_interactive()
+
+        elif option == "7":
+            deck = shuffle_tarot_deck()
+            print(f"Shuffled Tarot deck ({len(deck)} cards):")
+            for name, suit in deck:
+                print(f"{name} — {suit}")
+
+        elif option == "8":
+            deck = shuffle_tarot_deck()
+            count = int(input("How many Tarot cards would you like to draw? "))
+            drawn_cards = draw_tarot_cards(deck, count)
+
+            print("\nYour Tarot cards:")
+            for name, suit in drawn_cards:
+                print(f"{name} — {suit}")
+            print(f"Cards remaining: {len(deck)}")
+
+        elif option == "9":
+            deck = shuffle_uno_deck()
+            print(f"Shuffled UNO deck ({len(deck)} cards):")
+            for name, color in deck:
+                if color == "Wild":
+                    print(name)
+                else:
+                    print(f"{color} {name}")
+
+        elif option == "10":
+            deck = shuffle_uno_deck()
+            count = int(input("How many UNO cards would you like to draw? "))
+            drawn_cards = draw_uno_cards(deck, count)
+
+            print("\nYour UNO cards:")
+            for name, color in drawn_cards:
+                if color == "Wild":
+                    print(name)
+                else:
+                    print(f"{color} {name}")
+            print(f"Cards remaining: {len(deck)}")
+
         # WRITING RANDOMIZERS
     elif category == "9":
         if option == "1":
@@ -499,6 +612,309 @@ def _run_randomizer(category: str, option: str) -> None:
             for rarity, count in summary.items():
                 percentage = count / len(results) * 100
                 print(f"{rarity}: {count} ({percentage:.1f}%)")
+
+        
+        elif option == "2":
+            credits = 100
+
+            print("\n" + "=" * 35)
+            print("         SLOT MACHINE")
+            print("=" * 35)
+            print("Starting credits: 100")
+
+            while credits > 0:
+                print(f"\nYour credits: {credits}")
+                bet_input = input(
+                    "Enter your bet, or Q to quit: "
+                ).strip()
+
+                if bet_input.lower() == "q":
+                    break
+
+                try:
+                    bet = int(bet_input)
+                except ValueError:
+                    print("Please enter a whole number.")
+                    continue
+
+                if bet <= 0:
+                    print("Your bet must be greater than zero.")
+                    continue
+
+                if bet > credits:
+                    print("You don't have enough credits for that bet.")
+                    continue
+
+                credits -= bet
+
+                print("\nSpinning the reels...")
+                time.sleep(0.5)
+
+                result = spin_slot_machine()
+
+                for symbol in result["reels"]:
+                    print(f"[ {symbol} ]", end=" ", flush=True)
+                    time.sleep(0.5)
+
+                print(f"\n\n{result['result']}!")
+
+                payout = bet * result["payout_multiplier"]
+                credits += payout
+                net = payout - bet
+
+                if payout > 0:
+                    print(f"You received {payout} credits.")
+                    print(f"Net result: +{net} credits.")
+                else:
+                    print(f"You lost {bet} credits.")
+
+                print(f"Balance: {credits} credits")
+
+                if credits == 0:
+                    print("\nYou're out of credits!")
+                    break
+
+            print(f"\nYou leave the slot machine with {credits} credits.")
+
+        
+        elif option == "3":
+            credits = 100
+
+            print("\n" + "=" * 35)
+            print("            ROULETTE")
+            print("=" * 35)
+            print("Starting credits: 100")
+            print("European wheel: 0-36")
+            print("You may place multiple bets per spin.")
+
+            while credits > 0:
+                print(f"\nYour credits: {credits}")
+                bets = []
+
+                while True:
+                    print("\nBet types:")
+                    print("1. Number (0-36) - pays 36x")
+                    print("2. Red or Black - pays 2x")
+                    print("3. Odd or Even - pays 2x")
+                    print("4. Low or High - pays 2x")
+                    print("Q. Finish betting and spin")
+                    print("X. Leave roulette")
+
+                    choice = input("Choose a bet: ").strip().lower()
+
+                    if choice == "x":
+                        print(
+                            f"\nYou leave roulette with {credits} credits."
+                        )
+                        return
+
+                    if choice == "q":
+                        if bets:
+                            break
+                        print("Place at least one bet before spinning.")
+                        continue
+
+                    try:
+                        if choice == "1":
+                            bet_type = "number"
+                            selection = int(
+                                input("Choose a number (0-36): ")
+                            )
+                        elif choice == "2":
+                            bet_type = "red/black"
+                            selection = input(
+                                "Choose red or black: "
+                            ).strip().lower()
+                        elif choice == "3":
+                            bet_type = "odd/even"
+                            selection = input(
+                                "Choose odd or even: "
+                            ).strip().lower()
+                        elif choice == "4":
+                            bet_type = "low/high"
+                            selection = input(
+                                "Choose low or high: "
+                            ).strip().lower()
+                        else:
+                            print("Invalid bet type.")
+                            continue
+
+                        # Validate the selection before accepting the bet.
+                        play_roulette(
+                            bet_type,
+                            selection,
+                            winning_number=0,
+                        )
+
+                        stake = int(input("Stake for this bet: "))
+
+                        if stake <= 0:
+                            print("The stake must be greater than zero.")
+                            continue
+
+                        if stake > credits:
+                            print("You don't have enough credits.")
+                            continue
+
+                    except (ValueError, TypeError) as error:
+                        print(f"Invalid bet: {error}")
+                        continue
+
+                    credits -= stake
+                    bets.append((bet_type, selection, stake))
+                    print(f"Bet placed. Remaining credits: {credits}")
+
+                    if credits == 0:
+                        print("No credits remain for additional bets.")
+                        break
+
+                    more = input("Place another bet? (y/n): ").strip().lower()
+                    if more != "y":
+                        break
+
+                if not bets:
+                    continue
+
+                print("\nThe wheel is spinning...")
+                time.sleep(1)
+
+                # All bets share one winning number.
+                winning_number = random.randint(0, 36)
+                result = play_roulette(
+                    bets[0][0],
+                    bets[0][1],
+                    winning_number=winning_number,
+                )
+
+                print("\nThe ball is bouncing...")
+                time.sleep(0.7)
+                print("And the winning number is...")
+                time.sleep(0.8)
+                print(
+                    f'\n  {result["winning_number"]} '
+                    f'({result["color"].upper()})'
+                )
+
+                total_return = 0
+
+                for bet_type, selection, stake in bets:
+                    bet_result = play_roulette(
+                        bet_type,
+                        selection,
+                        winning_number=winning_number,
+                    )
+
+                    payout = stake * bet_result["payout_multiplier"]
+                    total_return += payout
+
+                    label = f"{bet_type}: {selection}"
+                    if bet_result["won"]:
+                        print(f"{label} — WIN! +{payout} returned")
+                    else:
+                        print(f"{label} — Lost {stake}")
+
+                credits += total_return
+                round_stake = sum(stake for _, _, stake in bets)
+                net = total_return - round_stake
+
+                print(f"\nRound profit/loss: {net:+} credits")
+                print(f"Balance: {credits} credits")
+
+                if credits == 0:
+                    print("\nYou're out of credits!")
+                    break
+
+            print(f"\nYou leave roulette with {credits} credits.")
+
+        
+        elif option == "4":
+            attempts = 5
+            collected_prizes = []
+
+            difficulties = {
+                "1": ("Easy", 0.50),
+                "2": ("Standard", 0.25),
+                "3": ("Difficult", 0.10),
+            }
+
+            print("\n" + "=" * 35)
+            print("          CLAW MACHINE")
+            print("=" * 35)
+            print(f"Available attempts: {attempts}")
+            print("\nPrizes inside the machine:")
+
+            for prize in DEFAULT_CLAW_PRIZES:
+                print(f"  - {prize}")
+
+            while attempts > 0:
+                print(f"\nAttempts remaining: {attempts}")
+                print("1. Easy claw       (50% chance)")
+                print("2. Standard claw   (25% chance)")
+                print("3. Difficult claw  (10% chance)")
+                print("Q. Leave machine")
+
+                choice = input("Choose your claw: ").strip().lower()
+
+                if choice == "q":
+                    break
+
+                if choice not in difficulties:
+                    print("Invalid choice. Try again.")
+                    continue
+
+                difficulty, probability = difficulties[choice]
+                attempts -= 1
+
+                print(f"\nYou control the {difficulty.lower()} claw...")
+                time.sleep(0.6)
+                print("The claw moves over the prizes...")
+                time.sleep(0.6)
+                print("Lowering...")
+                time.sleep(0.6)
+
+                result = play_claw_machine(
+                    DEFAULT_CLAW_PRIZES,
+                    probability,
+                )
+
+                print("The claw closes around a prize...")
+                time.sleep(0.7)
+
+                if result["won"]:
+                    prize = result["prize"]
+                    collected_prizes.append(prize)
+                    print(f"\nYou got it! You won: {prize}!")
+                else:
+                    print("\nOh no! The prize slipped out of the claw.")
+
+                print(
+                    f"Success chance for that attempt: "
+                    f"{probability:.0%}"
+                )
+
+                print("\nYour prize collection:")
+                if collected_prizes:
+                    for index, prize in enumerate(
+                        collected_prizes, start=1
+                    ):
+                        print(f"{index}. {prize}")
+                else:
+                    print("Nothing collected yet.")
+
+            print("\n" + "=" * 35)
+            print("         SESSION OVER")
+            print("=" * 35)
+            print(f"Prizes won: {len(collected_prizes)}")
+            print(f"Attempts left: {attempts}")
+
+            if collected_prizes:
+                print("You collected:")
+                for prize in collected_prizes:
+                    print(f"  - {prize}")
+            else:
+                print("You didn't win a prize this time.")
+
+            print("Thanks for playing!")
             
 def main() -> None:
     """Run the category-based All-in Randomizer command-line menu."""

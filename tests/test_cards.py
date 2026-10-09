@@ -1,5 +1,5 @@
-
 import unittest
+from collections import Counter
 
 from all_in_randomizer.randomizers.cards import (
     RANKS,
@@ -8,6 +8,20 @@ from all_in_randomizer.randomizers.cards import (
     shuffle_deck,
     draw_cards,
     deal_hands,
+    draw_single_card,
+    calculate_blackjack_score,
+    play_blackjack,
+    create_tarot_deck,
+    shuffle_tarot_deck,
+    draw_tarot_cards,
+    MAJOR_ARCANA,
+    TAROT_SUITS,
+    TAROT_RANKS,
+    create_uno_deck,
+    shuffle_uno_deck,
+    draw_uno_cards,
+    UNO_COLORS,
+    UNO_ACTION_CARDS,
 )
 
 
@@ -133,6 +147,220 @@ class TestCards(unittest.TestCase):
         with self.assertRaises(TypeError):
             deal_hands("not a deck", 2, 5)
 
+class TestSingleCardDraw(unittest.TestCase):
+    def test_draws_exactly_one_card(self):
+        deck = create_standard_deck()
 
+        card = draw_single_card(deck)
+
+        self.assertIsInstance(card, tuple)
+        self.assertEqual(len(card), 2)
+        self.assertEqual(len(deck), 51)
+
+    def test_drawn_card_is_removed_from_deck(self):
+        deck = create_standard_deck()
+
+        card = draw_single_card(deck)
+
+        self.assertNotIn(card, deck)
+
+    def test_can_draw_from_a_shuffled_deck(self):
+        deck = shuffle_deck()
+
+        card = draw_single_card(deck)
+
+        self.assertIn(card[0], RANKS)
+        self.assertIn(card[1], SUITS)
+
+    def test_rejects_a_non_list_deck(self):
+        with self.assertRaises(TypeError):
+            draw_single_card("not a deck")
+
+    def test_rejects_an_empty_deck(self):
+        with self.assertRaises(ValueError):
+            draw_single_card([])
+
+class TestBlackjack(unittest.TestCase):
+    def test_number_cards_are_scored_correctly(self):
+        hand = [("2", "Hearts"), ("7", "Spades")]
+        self.assertEqual(calculate_blackjack_score(hand), 9)
+
+    def test_face_cards_are_worth_ten(self):
+        hand = [("King", "Hearts"), ("Queen", "Spades")]
+        self.assertEqual(calculate_blackjack_score(hand), 20)
+
+    def test_ace_can_count_as_eleven(self):
+        hand = [("Ace", "Hearts"), ("7", "Spades")]
+        self.assertEqual(calculate_blackjack_score(hand), 18)
+
+    def test_ace_changes_to_one_to_prevent_bust(self):
+        hand = [
+            ("Ace", "Hearts"),
+            ("9", "Spades"),
+            ("5", "Clubs"),
+        ]
+        self.assertEqual(calculate_blackjack_score(hand), 15)
+
+    def test_blackjack_returns_expected_fields(self):
+        result = play_blackjack(["stand"])
+
+        expected_keys = {
+            "player_hand",
+            "dealer_hand",
+            "player_score",
+            "dealer_score",
+            "actions_used",
+            "result",
+        }
+
+        self.assertEqual(set(result.keys()), expected_keys)
+        self.assertEqual(len(result["player_hand"]), 2)
+        self.assertEqual(result["actions_used"], ["stand"])
+        self.assertIn(result["result"], ("win", "lose", "tie"))
+
+    def test_invalid_action_is_rejected(self):
+        with self.assertRaises(ValueError):
+            play_blackjack(["double"])
+
+    def test_non_list_actions_are_rejected(self):
+        with self.assertRaises(TypeError):
+            play_blackjack("hit")
+
+    def test_non_string_action_is_rejected(self):
+        with self.assertRaises(TypeError):
+            play_blackjack([123])
+
+class TestTarotDeck(unittest.TestCase):
+    def test_tarot_deck_has_78_cards(self):
+        deck = create_tarot_deck()
+        self.assertEqual(len(deck), 78)
+
+    def test_tarot_deck_has_22_major_arcana_cards(self):
+        deck = create_tarot_deck()
+        major_cards = [
+            card for card in deck
+            if card[1] == "Major Arcana"
+        ]
+        self.assertEqual(len(major_cards), 22)
+
+    def test_tarot_deck_has_56_minor_arcana_cards(self):
+        deck = create_tarot_deck()
+        minor_cards = [
+            card for card in deck
+            if card[1] in TAROT_SUITS
+        ]
+        self.assertEqual(len(minor_cards), 56)
+
+    def test_each_minor_suit_has_14_cards(self):
+        deck = create_tarot_deck()
+
+        for suit in TAROT_SUITS:
+            suit_cards = [
+                card for card in deck
+                if card[1] == suit
+            ]
+            self.assertEqual(len(suit_cards), 14)
+
+    def test_all_tarot_cards_are_unique(self):
+        deck = create_tarot_deck()
+        self.assertEqual(len(deck), len(set(deck)))
+
+    def test_shuffled_tarot_deck_contains_all_cards(self):
+        original = create_tarot_deck()
+        shuffled = shuffle_tarot_deck()
+
+        self.assertEqual(set(original), set(shuffled))
+        self.assertEqual(len(shuffled), 78)
+
+    def test_drawing_removes_cards_from_deck(self):
+        deck = create_tarot_deck()
+
+        drawn = draw_tarot_cards(deck, 3)
+
+        self.assertEqual(len(drawn), 3)
+        self.assertEqual(len(deck), 75)
+        self.assertTrue(set(drawn).isdisjoint(set(deck)))
+
+    def test_drawing_one_card_by_default(self):
+        deck = create_tarot_deck()
+
+        drawn = draw_tarot_cards(deck)
+
+        self.assertEqual(len(drawn), 1)
+        self.assertEqual(len(deck), 77)
+
+    def test_cannot_draw_more_cards_than_available(self):
+        with self.assertRaises(ValueError):
+            draw_tarot_cards([], 1)
+
+    def test_card_count_must_be_an_integer(self):
+        with self.assertRaises(TypeError):
+            draw_tarot_cards(create_tarot_deck(), 2.5)
+
+
+class TestUnoDeck(unittest.TestCase):
+    def test_uno_deck_has_108_cards(self):
+        self.assertEqual(len(create_uno_deck()), 108)
+
+    def test_each_color_has_25_cards(self):
+        deck = create_uno_deck()
+
+        for color in UNO_COLORS:
+            color_cards = [
+                card for card in deck
+                if card[1] == color
+            ]
+            self.assertEqual(len(color_cards), 25)
+
+    def test_deck_has_four_wild_cards_of_each_type(self):
+        deck = create_uno_deck()
+
+        wild_cards = [card for card in deck if card[0] == "Wild"]
+        wild_draw_four_cards = [
+            card for card in deck
+            if card[0] == "Wild Draw Four"
+        ]
+
+        self.assertEqual(len(wild_cards), 4)
+        self.assertEqual(len(wild_draw_four_cards), 4)
+
+    def test_each_action_card_has_two_copies_per_color(self):
+        deck = create_uno_deck()
+
+        for color in UNO_COLORS:
+            for action in UNO_ACTION_CARDS:
+                self.assertEqual(deck.count((action, color)), 2)
+
+    def test_shuffled_deck_contains_all_original_cards(self):
+        original = create_uno_deck()
+        shuffled = shuffle_uno_deck()
+
+        self.assertEqual(len(shuffled), 108)
+        self.assertCountEqual(shuffled, original)
+
+    def test_drawing_removes_cards_from_deck(self):
+        deck = create_uno_deck()
+        original_counts = Counter(deck)
+
+        drawn = draw_uno_cards(deck, 7)
+
+        self.assertEqual(len(deck), 101)
+
+    def test_draws_one_card_by_default(self):
+        deck = create_uno_deck()
+
+        drawn = draw_uno_cards(deck)
+
+        self.assertEqual(len(drawn), 1)
+        self.assertEqual(len(deck), 107)
+
+    def test_cannot_draw_more_cards_than_available(self):
+        with self.assertRaises(ValueError):
+            draw_uno_cards([], 1)
+
+    def test_card_count_must_be_an_integer(self):
+        with self.assertRaises(TypeError):
+            draw_uno_cards(create_uno_deck(), 2.5)
+            
 if __name__ == "__main__":
     unittest.main()

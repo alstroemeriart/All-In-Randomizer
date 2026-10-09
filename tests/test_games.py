@@ -5,8 +5,13 @@ from unittest.mock import patch
 from all_in_randomizer.randomizers.games import (
     DEFAULT_RARITIES,
     DEFAULT_WEIGHTS,
+    DEFAULT_CLAW_PRIZES,
     simulate_gacha,
     summarize_gacha,
+    SLOT_SYMBOLS,
+    play_claw_machine,
+    play_roulette,
+    spin_slot_machine,
 )
 
 
@@ -87,6 +92,98 @@ class TestGachaSimulator(unittest.TestCase):
         summary = summarize_gacha(results)
 
         self.assertEqual(sum(summary.values()), len(results))
+
+    
+    # SLOT MACHINE TESTS
+
+    def test_slot_machine_returns_three_symbols(self):
+        result = spin_slot_machine()
+        self.assertEqual(len(result["reels"]), 3)
+        self.assertTrue(all(symbol in SLOT_SYMBOLS for symbol in result["reels"]))
+
+    def test_slot_machine_jackpot(self):
+        with patch(
+            "all_in_randomizer.randomizers.games.random.choice",
+            return_value="Seven",
+        ):
+            result = spin_slot_machine()
+
+        self.assertEqual(result["result"], "Jackpot")
+        self.assertEqual(result["payout_multiplier"], 15)
+
+    def test_slot_machine_pair(self):
+        with patch(
+            "all_in_randomizer.randomizers.games.random.choice",
+            side_effect=["Cherry", "Cherry", "Lemon"],
+        ):
+            result = spin_slot_machine()
+
+        self.assertEqual(result["result"], "Pair")
+        self.assertEqual(result["payout_multiplier"], 2)
+
+    def test_slot_machine_no_win(self):
+        with patch(
+            "all_in_randomizer.randomizers.games.random.choice",
+            side_effect=["Cherry", "Lemon", "Bell"],
+        ):
+            result = spin_slot_machine()
+
+        self.assertEqual(result["result"], "No win")
+        self.assertEqual(result["payout_multiplier"], 0)
+
+    # ROULETTE TESTS
+
+    def test_roulette_correct_number(self):
+        result = play_roulette("number", 17, winning_number=17)
+        self.assertTrue(result["won"])
+        self.assertEqual(result["payout_multiplier"], 36)
+
+    def test_roulette_wrong_number(self):
+        result = play_roulette("number", 17, winning_number=18)
+        self.assertFalse(result["won"])
+        self.assertEqual(result["payout_multiplier"], 0)
+
+    def test_roulette_red_bet(self):
+        result = play_roulette("red/black", "red", winning_number=1)
+        self.assertTrue(result["won"])
+        self.assertEqual(result["color"], "red")
+
+    def test_roulette_zero_loses_even_money_bet(self):
+        result = play_roulette("odd/even", "even", winning_number=0)
+        self.assertFalse(result["won"])
+
+    def test_roulette_rejects_invalid_number(self):
+        with self.assertRaises(ValueError):
+            play_roulette("number", 40, winning_number=5)
+
+    def test_roulette_rejects_invalid_bet_type(self):
+        with self.assertRaises(ValueError):
+            play_roulette("dozen", 1, winning_number=1)
+
+    # CLAW MACHINE TESTS
+
+    def test_claw_machine_guaranteed_win(self):
+        result = play_claw_machine(DEFAULT_CLAW_PRIZES, 1)
+        self.assertTrue(result["won"])
+        self.assertIn(result["prize"], DEFAULT_CLAW_PRIZES)
+
+    def test_claw_machine_guaranteed_miss(self):
+        result = play_claw_machine(DEFAULT_CLAW_PRIZES, 0)
+        self.assertFalse(result["won"])
+        self.assertIsNone(result["prize"])
+
+    def test_claw_machine_custom_prizes(self):
+        prizes = ("Dragon Plush", "Robot Plush")
+        result = play_claw_machine(prizes, 1)
+        self.assertIn(result["prize"], prizes)
+
+    def test_claw_machine_rejects_empty_prizes(self):
+        with self.assertRaises(ValueError):
+            play_claw_machine((), 0.25)
+
+    def test_claw_machine_rejects_invalid_probability(self):
+        with self.assertRaises(ValueError):
+            play_claw_machine(DEFAULT_CLAW_PRIZES, 1.5)
 
 
 if __name__ == "__main__":

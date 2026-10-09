@@ -1,4 +1,5 @@
 import random
+import math
 from fractions import Fraction
 
 from all_in_randomizer.core.random_numbers import (
@@ -74,3 +75,80 @@ def generate_coordinate(decimal_places: int = 4) -> dict:
         "latitude": latitude,
         "longitude": longitude,
     }
+
+
+def generate_range_number(
+    minimum: float,
+    maximum: float,
+    mode: str = "integer",
+    decimal_places: int = 2,
+) -> int | float | Fraction:
+    """Generate a number within a range using the selected number mode."""
+    if not isinstance(minimum, (int, float)) or isinstance(minimum, bool):
+        raise TypeError("Minimum must be a number.")
+
+    if not isinstance(maximum, (int, float)) or isinstance(maximum, bool):
+        raise TypeError("Maximum must be a number.")
+
+    if not math.isfinite(minimum) or not math.isfinite(maximum):
+        raise ValueError("Bounds must be finite numbers.")
+
+    if minimum > maximum:
+        raise ValueError("Minimum cannot exceed maximum.")
+
+    if mode == "positive":
+        if not isinstance(minimum, int) or isinstance(minimum, bool):
+            raise TypeError("Positive integer bounds must be integers.")
+        if not isinstance(maximum, int) or isinstance(maximum, bool):
+            raise TypeError("Positive integer bounds must be integers.")
+        if minimum < 1:
+            raise ValueError("Positive integer minimum must be at least 1.")
+
+        return random.randint(minimum, maximum)
+
+    if mode == "integer":
+        if not isinstance(minimum, int) or isinstance(minimum, bool):
+            raise TypeError("Integer mode requires integer bounds.")
+        if not isinstance(maximum, int) or isinstance(maximum, bool):
+            raise TypeError("Integer mode requires integer bounds.")
+
+        return random.randint(minimum, maximum)
+
+    if mode == "decimal":
+        if (
+            not isinstance(decimal_places, int)
+            or isinstance(decimal_places, bool)
+        ):
+            raise TypeError("Decimal places must be an integer.")
+
+        if not 0 <= decimal_places <= 10:
+            raise ValueError("Decimal places must be between 0 and 10.")
+
+        return round(random.uniform(minimum, maximum), decimal_places)
+
+    if mode == "fraction":
+        # Try denominators from 1 to 100 and find a fraction
+        # that falls inside the requested range.
+        possible_fractions = []
+
+        for denominator in range(1, 101):
+            lowest_numerator = math.ceil(minimum * denominator)
+            highest_numerator = math.floor(maximum * denominator)
+
+            if lowest_numerator <= highest_numerator:
+                numerator = random.randint(
+                    lowest_numerator,
+                    highest_numerator,
+                )
+                possible_fractions.append(
+                    Fraction(numerator, denominator)
+                )
+
+        if not possible_fractions:
+            raise ValueError("No fraction could be generated in this range.")
+
+        return random.choice(possible_fractions)
+
+    raise ValueError(
+        "Mode must be 'positive', 'integer', 'decimal', or 'fraction'."
+    )
