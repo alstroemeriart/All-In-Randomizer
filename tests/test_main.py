@@ -20,13 +20,22 @@ class TestMain(unittest.TestCase):
             any("Invalid category" in str(call) for call in mock_print.call_args_list)
         )
 
-    @patch("builtins.input", side_effect=["6", "", "0"])
+    @patch("builtins.input", side_effect=["7", "", "0"])
     @patch("builtins.print")
-    def test_planned_category_is_marked_not_implemented(self, mock_print, mock_input):
+    def test_planned_category_is_marked_not_implemented(
+        self, mock_print, mock_input
+    ):
         main()
+
+        printed_messages = [
+            str(call) for call in mock_print.call_args_list
+        ]
+
         self.assertTrue(
-            any("planned but not implemented yet" in str(call)
-                for call in mock_print.call_args_list)
+            any(
+                "not implemented" in message.lower()
+                for message in printed_messages
+            )
         )
 
     @patch("builtins.input", side_effect=["1", "b", "0"])

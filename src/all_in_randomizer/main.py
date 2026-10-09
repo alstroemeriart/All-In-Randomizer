@@ -46,7 +46,9 @@ from all_in_randomizer.randomizers.fortune import (
     generate_groups,
     assign_roles,
 )
-
+from all_in_randomizer.randomizers.tournament import (
+    generate_tournament_draw,
+)
 
 # Each category lists only the randomizers that are implemented so far.
 CATEGORIES = {
@@ -93,7 +95,10 @@ CATEGORIES = {
         ("7", "Generate groups"),
         ("8", "Assign roles"),
     ]),
-    "6": ("Tournament Randomizer", []),
+    "6": ("Tournament Randomizer", [
+        ("1", "Generate a single-elimination draw"),
+        ("2", "Generate a double-elimination draw"),
+    ]),
     "7": ("Cards", []),
     "8": ("Social Themed Randomizers", []),
     "9": ("Writing", []),
@@ -296,6 +301,46 @@ def _run_randomizer(category: str, option: str) -> None:
             )
             for participant, role in assign_roles(participants, roles).items():
                 print(f"{participant}: {role}")
+
+        # TOURNAMENT RANDOMIZER
+    elif category == "6":
+        if option == "1":
+            tournament_format = "single elimination"
+        elif option == "2":
+            tournament_format = "double elimination"
+        else:
+            raise ValueError("Invalid tournament option.")
+
+        participants = read_comma_separated_items(
+            "Enter participant names separated by commas: "
+        )
+
+        result = generate_tournament_draw(
+            participants,
+            tournament_format,
+        )
+
+        print(f"\nFormat: {result['format']}")
+        print(f"Participants: {', '.join(result['participants'])}")
+        print(f"Byes: {result['bye_count']}")
+        print(f"Opening round ({len(result['opening_round'])} matchups):")
+
+        for match in result["opening_round"]:
+            participant_1 = match["participant_1"]
+            participant_2 = match["participant_2"]
+
+            if match["bye"]:
+                print(
+                    f"Match {match['match']}: "
+                    f"{participant_1} advances with a BYE"
+                )
+            else:
+                print(
+                    f"Match {match['match']}: "
+                    f"{participant_1} vs {participant_2}"
+                )
+
+        print(result["note"])
 
 
 def main() -> None:
