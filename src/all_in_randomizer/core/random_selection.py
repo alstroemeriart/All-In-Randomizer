@@ -1,4 +1,3 @@
-
 import random
 
 
@@ -25,7 +24,7 @@ def choose_multiple(items: list, count: int) -> list:
 
 
 def shuffle_items(items: list) -> list:
-    """Return a shuffled copy of a list."""
-    shuffled = items.copy()
+    """Return a shuffled list copy of any sequence (list, tuple, ...)."""
+    shuffled = list(items)
     random.shuffle(shuffled)
     return shuffled

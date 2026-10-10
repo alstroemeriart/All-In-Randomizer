@@ -1,6 +1,6 @@
-
 import math
 import random
+from decimal import Decimal
 
 
 def _validate_integer_bounds(minimum: int, maximum: int) -> None:
@@ -15,6 +15,37 @@ def _validate_integer_bounds(minimum: int, maximum: int) -> None:
 
     if minimum > maximum:
         raise ValueError("Minimum cannot exceed maximum.")
+
+
+def _round_within_bounds(
+    value: float,
+    minimum: float,
+    maximum: float,
+    decimal_places: int,
+) -> float:
+    """Round a value without letting rounding push it outside the bounds.
+
+    Rounding can escape a narrow range, for example round(0.0015, 2) is 0.0
+    even when the minimum is 0.001. In that case, use the closest value with
+    the requested precision that is still inside the range.
+    """
+    rounded = round(value, decimal_places)
+
+    if minimum <= rounded <= maximum:
+        return rounded
+
+    # Decimal(repr(x)) keeps 1.1 as 1.1 instead of 1.100000000000000088...
+    scale = 10 ** decimal_places
+    lowest = math.ceil(Decimal(repr(minimum)) * scale)
+    highest = math.floor(Decimal(repr(maximum)) * scale)
+
+    if lowest > highest:
+        raise ValueError(
+            f"No value with {decimal_places} decimal places exists "
+            "between the minimum and maximum."
+        )
+
+    return (lowest if rounded < minimum else highest) / scale
 
 
 def generate_integer(minimum: int, maximum: int) -> int:
@@ -56,7 +87,7 @@ def generate_decimal(
         raise ValueError("Decimal places cannot be negative.")
 
     result = random.uniform(minimum, maximum)
-    return round(result, decimal_places)
+    return _round_within_bounds(result, minimum, maximum, decimal_places)
 
 
 def generate_odd_integer(minimum: int, maximum: int) -> int:

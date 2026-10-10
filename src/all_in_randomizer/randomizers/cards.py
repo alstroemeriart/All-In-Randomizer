@@ -1,4 +1,3 @@
-
 import random
 
 
@@ -22,6 +21,22 @@ RANKS = (
 
 Card = tuple[str, str]
 
+def validate_standard_deck(deck: list[Card]) -> None:
+    """Validate that a deck contains unique, valid standard playing cards."""
+    if not isinstance(deck, list):
+        raise TypeError("Deck must be provided as a list.")
+
+    if len(deck) != 52:
+        raise ValueError("A standard deck must contain exactly 52 cards.")
+
+    if any(not isinstance(card, tuple) or len(card) != 2 for card in deck):
+        raise ValueError("Each card must be a (rank, suit) tuple.")
+
+    if any(rank not in RANKS or suit not in SUITS for rank, suit in deck):
+        raise ValueError("Deck contains an invalid rank or suit.")
+
+    if len(set(deck)) != 52:
+        raise ValueError("A standard deck cannot contain duplicate cards.")
 
 def create_standard_deck() -> list[Card]:
     """Create and return a standard 52-card playing deck."""
@@ -123,11 +138,45 @@ def calculate_blackjack_score(hand: list[Card]) -> int:
     return score
 
 
+def _is_natural_blackjack(hand: list[Card]) -> bool:
+    """Return True for a two-card hand worth exactly 21."""
+    return len(hand) == 2 and calculate_blackjack_score(hand) == 21
+
+
+def _blackjack_result(
+    player_score: int,
+    dealer_score: int,
+    player_blackjack: bool,
+    dealer_blackjack: bool,
+) -> str:
+    """Decide a round's outcome. Shared by both Blackjack versions."""
+    if player_score > 21:
+        return "lose"
+
+    if player_blackjack and dealer_blackjack:
+        return "tie"
+
+    if player_blackjack:
+        return "win"
+
+    if dealer_blackjack:
+        return "lose"
+
+    if dealer_score > 21 or player_score > dealer_score:
+        return "win"
+
+    if player_score < dealer_score:
+        return "lose"
+
+    return "tie"
+
+
 def play_blackjack(player_actions: list[str]) -> dict:
     """Play one Blackjack round using a supplied sequence of actions.
 
     Actions must be 'hit' or 'stand'. The dealer draws until
-    reaching a score of at least 17.
+    reaching a score of at least 17. A natural Blackjack on either
+    side settles the round immediately, so no actions are used.
     """
     if not isinstance(player_actions, list):
         raise TypeError("Player actions must be provided as a list.")
@@ -141,41 +190,35 @@ def play_blackjack(player_actions: list[str]) -> dict:
     deck = shuffle_deck()
     player_hand = draw_cards(deck, 2)
     dealer_hand = draw_cards(deck, 2)
+
+    player_blackjack = _is_natural_blackjack(player_hand)
+    dealer_blackjack = _is_natural_blackjack(dealer_hand)
+    round_settled = player_blackjack or dealer_blackjack
     actions_used = []
 
-    for action in player_actions:
-        if calculate_blackjack_score(player_hand) >= 21:
-            break
+    if not round_settled:
+        for action in player_actions:
+            if calculate_blackjack_score(player_hand) >= 21:
+                break
 
-        normalized_action = action.lower()
-        actions_used.append(normalized_action)
+            normalized_action = action.lower()
+            actions_used.append(normalized_action)
 
-        if normalized_action == "stand":
-            break
+            if normalized_action == "stand":
+                break
 
-        player_hand.extend(draw_cards(deck, 1))
+            player_hand.extend(draw_cards(deck, 1))
 
-        if calculate_blackjack_score(player_hand) > 21:
-            break
+            if calculate_blackjack_score(player_hand) > 21:
+                break
 
     player_score = calculate_blackjack_score(player_hand)
 
-    if player_score <= 21:
+    if player_score <= 21 and not round_settled:
         while calculate_blackjack_score(dealer_hand) < 17:
             dealer_hand.extend(draw_cards(deck, 1))
 
     dealer_score = calculate_blackjack_score(dealer_hand)
-
-    if player_score > 21:
-        result = "lose"
-    elif dealer_score > 21:
-        result = "win"
-    elif player_score > dealer_score:
-        result = "win"
-    elif player_score < dealer_score:
-        result = "lose"
-    else:
-        result = "tie"
 
     return {
         "player_hand": player_hand,
@@ -183,7 +226,12 @@ def play_blackjack(player_actions: list[str]) -> dict:
         "player_score": player_score,
         "dealer_score": dealer_score,
         "actions_used": actions_used,
-        "result": result,
+        "result": _blackjack_result(
+            player_score,
+            dealer_score,
+            player_blackjack,
+            dealer_blackjack,
+        ),
     }
 
 
@@ -307,22 +355,12 @@ def play_blackjack_interactive(input_fn=None, output_fn=None) -> dict:
     dealer_score = calculate_blackjack_score(dealer_hand)
 
     # Resolve the round, including natural Blackjack.
-    if player_score > 21:
-        result = "lose"
-    elif player_blackjack and dealer_blackjack:
-        result = "tie"
-    elif player_blackjack:
-        result = "win"
-    elif dealer_blackjack:
-        result = "lose"
-    elif dealer_score > 21:
-        result = "win"
-    elif player_score > dealer_score:
-        result = "win"
-    elif player_score < dealer_score:
-        result = "lose"
-    else:
-        result = "tie"
+    result = _blackjack_result(
+        player_score,
+        dealer_score,
+        player_blackjack,
+        dealer_blackjack,
+    )
 
     output_fn("\n" + "=" * 32)
     output_fn("         ROUND OVER")

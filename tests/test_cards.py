@@ -1,5 +1,6 @@
 import unittest
 from collections import Counter
+from unittest.mock import patch
 
 from all_in_randomizer.randomizers.cards import (
     RANKS,
@@ -14,6 +15,7 @@ from all_in_randomizer.randomizers.cards import (
     create_tarot_deck,
     shuffle_tarot_deck,
     draw_tarot_cards,
+    validate_standard_deck,
     MAJOR_ARCANA,
     TAROT_SUITS,
     TAROT_RANKS,
@@ -201,8 +203,30 @@ class TestBlackjack(unittest.TestCase):
         ]
         self.assertEqual(calculate_blackjack_score(hand), 15)
 
+    @staticmethod
+    def _play_with_deck(deck, actions):
+        """Play a round with a fixed deck: players and dealer get the
+        first cards in order (player, player, dealer, dealer, then draws)."""
+        with patch(
+            "all_in_randomizer.randomizers.cards.random.sample",
+            side_effect=lambda population, count: list(population[:count]),
+        ), patch(
+            "all_in_randomizer.randomizers.cards.shuffle_deck",
+            return_value=list(deck),
+        ):
+            return play_blackjack(actions)
+
     def test_blackjack_returns_expected_fields(self):
-        result = play_blackjack(["stand"])
+        result = self._play_with_deck(
+            [
+                ("10", "Hearts"),
+                ("9", "Clubs"),
+                ("10", "Spades"),
+                ("6", "Diamonds"),
+                ("6", "Hearts"),
+            ],
+            ["stand"],
+        )
 
         expected_keys = {
             "player_hand",
@@ -216,7 +240,71 @@ class TestBlackjack(unittest.TestCase):
         self.assertEqual(set(result.keys()), expected_keys)
         self.assertEqual(len(result["player_hand"]), 2)
         self.assertEqual(result["actions_used"], ["stand"])
-        self.assertIn(result["result"], ("win", "lose", "tie"))
+        self.assertEqual(result["dealer_score"], 22)
+        self.assertEqual(result["result"], "win")
+
+    def test_player_natural_beats_dealer_who_would_draw_to_21(self):
+        # Dealer holds 11 and would draw a 10 to reach 21 if allowed to.
+        result = self._play_with_deck(
+            [
+                ("Ace", "Spades"),
+                ("King", "Hearts"),
+                ("5", "Diamonds"),
+                ("6", "Clubs"),
+                ("10", "Spades"),
+            ],
+            ["stand"],
+        )
+
+        self.assertEqual(result["result"], "win")
+        self.assertEqual(len(result["dealer_hand"]), 2)
+        self.assertEqual(result["actions_used"], [])
+
+    def test_dealer_natural_ends_round_before_player_acts(self):
+        # Hitting would give the player 21, but the dealer's natural wins.
+        result = self._play_with_deck(
+            [
+                ("5", "Spades"),
+                ("6", "Hearts"),
+                ("Ace", "Diamonds"),
+                ("King", "Clubs"),
+                ("10", "Spades"),
+            ],
+            ["hit"],
+        )
+
+        self.assertEqual(result["result"], "lose")
+        self.assertEqual(result["actions_used"], [])
+        self.assertEqual(len(result["player_hand"]), 2)
+
+    def test_both_naturals_tie(self):
+        result = self._play_with_deck(
+            [
+                ("Ace", "Spades"),
+                ("King", "Hearts"),
+                ("Ace", "Diamonds"),
+                ("Queen", "Clubs"),
+            ],
+            ["stand"],
+        )
+
+        self.assertEqual(result["result"], "tie")
+
+    def test_three_card_21_does_not_beat_a_natural(self):
+        # Dealer natural vs player 21 made with three cards (not a natural).
+        # The round is settled at the deal, so the player cannot hit anyway.
+        result = self._play_with_deck(
+            [
+                ("7", "Spades"),
+                ("7", "Hearts"),
+                ("Ace", "Diamonds"),
+                ("King", "Clubs"),
+                ("7", "Clubs"),
+            ],
+            ["hit"],
+        )
+
+        self.assertEqual(result["result"], "lose")
 
     def test_invalid_action_is_rejected(self):
         with self.assertRaises(ValueError):
@@ -345,6 +433,8 @@ class TestUnoDeck(unittest.TestCase):
         drawn = draw_uno_cards(deck, 7)
 
         self.assertEqual(len(deck), 101)
+        # Duplicates exist in UNO, so compare as multisets.
+        self.assertEqual(Counter(drawn) + Counter(deck), original_counts)
 
     def test_draws_one_card_by_default(self):
         deck = create_uno_deck()
@@ -361,6 +451,41 @@ class TestUnoDeck(unittest.TestCase):
     def test_card_count_must_be_an_integer(self):
         with self.assertRaises(TypeError):
             draw_uno_cards(create_uno_deck(), 2.5)
+
+class TestStandardDeckValidation(unittest.TestCase):
+
+    def test_accepts_a_valid_standard_deck(self):
+        deck = create_standard_deck()
+        self.assertIsNone(validate_standard_deck(deck))
+
+    def test_rejects_a_non_list(self):
+        with self.assertRaises(TypeError):
+            validate_standard_deck("not a deck")
+
+    def test_rejects_a_deck_with_too_few_cards(self):
+        with self.assertRaises(ValueError):
+            validate_standard_deck(create_standard_deck()[:51])
+
+    def test_rejects_a_deck_with_invalid_card(self):
+        deck = create_standard_deck()
+        deck[0] = ("Dragon", "Space")
+
+        with self.assertRaises(ValueError):
+            validate_standard_deck(deck)
+
+    def test_rejects_duplicate_cards(self):
+        deck = create_standard_deck()
+        deck[0] = deck[1]
+
+        with self.assertRaises(ValueError):
+            validate_standard_deck(deck)
+
+    def test_rejects_malformed_card(self):
+        deck = create_standard_deck()
+        deck[0] = ("Ace",)
+
+        with self.assertRaises(ValueError):
+            validate_standard_deck(deck)
             
 if __name__ == "__main__":
     unittest.main()

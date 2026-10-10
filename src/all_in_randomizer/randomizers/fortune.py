@@ -125,6 +125,12 @@ def assign_roles(
     _validate_items(participants)
     _validate_items(roles)
 
+    # The result is keyed by participant, so duplicates would be dropped.
+    normalized_names = [name.strip().casefold() for name in participants]
+
+    if len(normalized_names) != len(set(normalized_names)):
+        raise ValueError("Participant names must be unique.")
+
     if len(participants) != len(roles):
         raise ValueError(
             "The number of roles must equal the number of participants."

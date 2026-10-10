@@ -20,8 +20,8 @@ class TestMain(unittest.TestCase):
             any("Invalid category" in str(call) for call in mock_print.call_args_list)
         )
 
-    @patch("builtins.input", side_effect=["8", "", "0"])
-    def test_planned_category_is_marked_not_implemented(self, mock_input):
+    @patch("builtins.input", side_effect=["8", "1", "truth", "", "b", "0"])
+    def test_social_category_truth_or_dare(self, mock_input):
         with patch("builtins.print") as mock_print:
             main()
 
@@ -31,10 +31,7 @@ class TestMain(unittest.TestCase):
             if call.args
         )
 
-        self.assertIn(
-            "Social Themed Randomizers is planned but not implemented yet.",
-            printed_text,
-        )
+        self.assertIn("Truth:", printed_text)
 
     @patch("builtins.input", side_effect=["1", "b", "0"])
     @patch("builtins.print")
@@ -78,6 +75,39 @@ class TestMain(unittest.TestCase):
         self.assertIn("Standard deck (52 cards):", printed_text)
         self.assertIn("Ace of Hearts", printed_text)
         self.assertIn("King of Spades", printed_text)
+
+    @patch("builtins.input", side_effect=["10", "5", "", "b", "0"])
+    def test_unimplemented_game_says_so(self, mock_input):
+        with patch("builtins.print") as mock_print:
+            main()
+
+        printed_text = "\n".join(
+            str(call.args[0])
+            for call in mock_print.call_args_list
+            if call.args
+        )
+
+        self.assertIn(
+            "Three Cups Game is planned but not implemented yet.",
+            printed_text,
+        )
+
+    # Place a 10-credit bet, then leave instead of spinning.
+    @patch(
+        "builtins.input",
+        side_effect=["10", "3", "1", "5", "10", "y", "x", "", "b", "0"],
+    )
+    def test_leaving_roulette_returns_unspun_bets(self, mock_input):
+        with patch("builtins.print") as mock_print:
+            main()
+
+        printed_text = "\n".join(
+            str(call.args[0])
+            for call in mock_print.call_args_list
+            if call.args
+        )
+
+        self.assertIn("You leave roulette with 100 credits.", printed_text)
 
 
 if __name__ == "__main__":

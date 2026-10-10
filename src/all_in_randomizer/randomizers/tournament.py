@@ -1,6 +1,6 @@
 import math
 import random
-
+from collections.abc import Callable
 
 BYE = "BYE"
 
@@ -67,6 +67,7 @@ def generate_tournament_draw(
     matchups = []
     match_number = 1
 
+    # Give the first participants automatic advancement when needed.
     for index in range(bye_count):
         participant = shuffled[index]
 
@@ -229,7 +230,6 @@ def run_single_elimination(
             completed_round.append(match)
 
         rounds.append(completed_round)
-
         advancing = [match["winner"] for match in completed_round]
 
         if len(advancing) == 1:
@@ -248,176 +248,183 @@ def run_single_elimination(
     }
 
 
-
 def run_double_elimination(
     participants: list[str],
-    match_winners: list[str],
+    match_winners: list[str] | Callable[[str, str, str], str],
 ) -> dict:
-    """Run a double-elimination tournament using supplied match winners."""
-
     _validate_participants(participants)
-    _validate_match_winners(match_winners)
+
+    if not callable(match_winners):
+        _validate_match_winners(match_winners)
 
     shuffled = random.sample(participants, len(participants))
-
-    # Keep track of each player's losses, including eliminated players.
-    all_losses = {name: 0 for name in shuffled}
-
-    # Only players still in the tournament belong in active.
-    active = {name: 0 for name in shuffled}
-
+    losses = {participant: 0 for participant in shuffled}
     rounds = []
     winner_index = 0
-    next_match_number = 1
 
-    def play_match(player_1, player_2, stage):
-        nonlocal winner_index, next_match_number
+    def play_match(
+        player_1: str,
+        player_2: str,
+        stage: str,
+    ) -> tuple[dict, str, str]:
+        nonlocal winner_index
+
+        if callable(match_winners):
+            winner = match_winners(player_1, player_2, stage)
+        else:
+            if winner_index >= len(match_winners):
+                raise ValueError("Not enough match winners were supplied.")
+            winner = match_winners[winner_index]
+            winner_index += 1
 
         match = {
-            "match": next_match_number,
             "participant_1": player_1,
             "participant_2": player_2,
             "bye": False,
             "winner": None,
-            "stage": stage,
         }
-        next_match_number += 1
+        record_match_winner(match, winner)
 
-        match, winner_index = _resolve_supplied_match(
-            match,
-            match_winners,
-            winner_index,
-        )
+        loser = player_2 if winner == player_1 else player_1
+        losses[loser] += 1
 
-        loser = (
-            player_2 if match["winner"] == player_1
-            else player_1
-        )
+        match["stage"] = stage
+        match["loser"] = loser
 
-        return match, match["winner"], loser
+        return match, winner, loser
 
-    while len(active) > 1:
+    def play_bracket_round(
+        players: list[str],
+        stage: str,
+    ) -> tuple[list[str], list[str], list[dict]]:
+        advancing = []
+        defeated = []
+        completed_matches = []
 
-        # When exactly two players remain with zero and one loss,
-        # they play the grand final.
-        if (
-            len(active) == 2
-            and sorted(active.values()) == [0, 1]
-        ):
-            undefeated = next(
-                name for name, losses in active.items()
-                if losses == 0
-            )
-            challenger = next(
-                name for name, losses in active.items()
-                if losses == 1
-            )
+        for index in range(0, len(players), 2):
+            player_1 = players[index]
 
-            match, winner, loser = play_match(
-                undefeated,
-                challenger,
-                "Grand Final",
-            )
-            rounds.append([match])
-
-            all_losses[loser] += 1
-            active[loser] += 1
-
-            # If the challenger wins, the undefeated player now
-            # has one loss too, so a reset final is required.
-            if winner == challenger:
-                match, winner, loser = play_match(
-                    undefeated,
-                    challenger,
-                    "Grand Final Reset",
-                )
-                rounds.append([match])
-
-                all_losses[loser] += 1
-                del active[loser]
-
-            else:
-                # The challenger received their second loss.
-                del active[challenger]
-
-            champion = winner
-            break
-
-        round_matches = []
-        losers_this_round = []
-
-        # Process players with zero losses and one loss separately.
-        # Players who lose this round cannot play again until the
-        # next round.
-        for loss_count, stage in (
-            (0, "Winners Bracket"),
-            (1, "Losers Bracket"),
-        ):
-            group = [
-                name for name, losses in active.items()
-                if losses == loss_count
-            ]
-
-            # A single player in a bracket waits for the next round.
-            if len(group) < 2:
+            if index + 1 >= len(players):
+                advancing.append(player_1)
+                completed_matches.append({
+                    "participant_1": player_1,
+                    "participant_2": BYE,
+                    "winner": player_1,
+                    "stage": stage,
+                    "bye": True,
+                })
                 continue
 
-            # Give one player a bye if this bracket has an odd count.
-            if len(group) % 2 == 1:
-                bye_player = group.pop()
-
-                round_matches.append({
-                    "match": next_match_number,
-                    "participant_1": bye_player,
-                    "participant_2": BYE,
-                    "bye": True,
-                    "winner": bye_player,
-                    "stage": stage,
-                })
-                next_match_number += 1
-
-            for index in range(0, len(group), 2):
-                player_1 = group[index]
-                player_2 = group[index + 1]
-
-                match, winner, loser = play_match(
-                    player_1,
-                    player_2,
-                    stage,
-                )
-
-                round_matches.append(match)
-                losers_this_round.append(loser)
-
-        if not round_matches:
-            raise RuntimeError(
-                "The tournament could not advance. "
-                "Check the tournament bracket logic."
+            player_2 = players[index + 1]
+            match, winner, loser = play_match(
+                player_1,
+                player_2,
+                stage,
             )
 
-        rounds.append(round_matches)
+            advancing.append(winner)
+            defeated.append(loser)
+            completed_matches.append(match)
 
-        # Apply losses only after every match in this round has
-        # been decided.
-        for loser in losers_this_round:
-            all_losses[loser] += 1
+        return advancing, defeated, completed_matches
 
-            if all_losses[loser] >= 2:
-                del active[loser]
-            else:
-                active[loser] = all_losses[loser]
+    # Create a proper opening round with the required number of byes.
+    bracket_size = 2 ** math.ceil(math.log2(len(shuffled)))
+    bye_count = bracket_size - len(shuffled)
 
+    winners_bracket = []
+    first_round_losers = []
+    first_round_matches = []
+
+    for participant in shuffled[:bye_count]:
+        winners_bracket.append(participant)
+        first_round_matches.append({
+            "participant_1": participant,
+            "participant_2": BYE,
+            "winner": participant,
+            "stage": "Winners Bracket",
+            "bye": True,
+        })
+
+    remaining = shuffled[bye_count:]
+
+    for index in range(0, len(remaining), 2):
+        player_1 = remaining[index]
+        player_2 = remaining[index + 1]
+
+        match, winner, loser = play_match(
+            player_1,
+            player_2,
+            "Winners Bracket",
+        )
+
+        winners_bracket.append(winner)
+        first_round_losers.append(loser)
+        first_round_matches.append(match)
+
+    rounds.append(first_round_matches)
+    losers_by_round = [first_round_losers]
+
+    # Complete the winners bracket.
+    while len(winners_bracket) > 1:
+        winners_bracket, defeated, completed = play_bracket_round(
+            winners_bracket,
+            "Winners Bracket",
+        )
+        rounds.append(completed)
+        losers_by_round.append(defeated)
+
+    winners_champion = winners_bracket[0]
+
+    # Process losers as they drop from each winners-bracket round.
+    losers_bracket = []
+
+    for dropped_players in losers_by_round:
+        losers_bracket.extend(dropped_players)
+
+        if len(losers_bracket) >= 2:
+            losers_bracket, _, completed = play_bracket_round(
+                losers_bracket,
+                "Losers Bracket",
+            )
+            rounds.append(completed)
+
+    while len(losers_bracket) > 1:
+        losers_bracket, _, completed = play_bracket_round(
+            losers_bracket,
+            "Losers Bracket",
+        )
+        rounds.append(completed)
+
+    losers_champion = losers_bracket[0]
+
+    # Play the grand final.
+    grand_final, final_winner, final_loser = play_match(
+        winners_champion,
+        losers_champion,
+        "Grand Final",
+    )
+    rounds.append([grand_final])
+
+    if losses[final_loser] < 2:
+        # The winners-bracket champion suffered their first loss.
+        reset_match, reset_winner, _ = play_match(
+            winners_champion,
+            losers_champion,
+            "Grand Final Reset",
+        )
+        rounds.append([reset_match])
+        champion = reset_winner
     else:
-        # The loop ends normally when only one player remains.
-        champion = next(iter(active))
+        champion = final_winner
 
-    if winner_index != len(match_winners):
+    if not callable(match_winners) and winner_index != len(match_winners):
         raise ValueError("Too many match winners were provided.")
 
     return {
-        "format": "Double Elimination",
+        "format": "double elimination",
         "participants": shuffled,
         "rounds": rounds,
-        "losses": {champion: all_losses[champion]},
         "champion": champion,
+        "losses": losses,
     }

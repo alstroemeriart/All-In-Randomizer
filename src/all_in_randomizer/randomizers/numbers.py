@@ -124,7 +124,7 @@ def generate_range_number(
         if not 0 <= decimal_places <= 10:
             raise ValueError("Decimal places must be between 0 and 10.")
 
-        return round(random.uniform(minimum, maximum), decimal_places)
+        return generate_decimal(minimum, maximum, decimal_places)
 
     if mode == "fraction":
         # Try denominators from 1 to 100 and find a fraction

@@ -316,9 +316,16 @@ class TestTournament(unittest.TestCase):
         )
 
         self.assertEqual(result["champion"], "Alice")
-        self.assertEqual(result["losses"], {"Alice": 0})
+        self.assertEqual(
+            result["losses"],
+            {
+                "Alice": 0,
+                "Bob": 2,
+                "Cara": 2,
+                "David": 2,
+            },
+        )
 
-    
     @patch(
         "all_in_randomizer.randomizers.tournament.random.sample",
         side_effect=lambda items, count: list(items),
@@ -331,7 +338,13 @@ class TestTournament(unittest.TestCase):
 
         self.assertEqual(result["champion"], "Bob")
         self.assertEqual(len(result["rounds"]), 3)
-        self.assertEqual(result["losses"], {"Bob": 1})
+        self.assertEqual(
+            result["losses"],
+            {
+                "Alice": 2,
+                "Bob": 1,
+            },
+        )
         
     def test_tournament_rejects_non_list_winners(self):
         with self.assertRaises(TypeError):
@@ -346,6 +359,136 @@ class TestTournament(unittest.TestCase):
                 ["Alice", "Bob"],
                 [" "],
             )
+
+    @patch(
+        "all_in_randomizer.randomizers.tournament.random.sample",
+        side_effect=lambda items, count: list(items),
+    )
+    def test_double_elimination_handles_odd_and_even_brackets(
+        self, mock_sample
+    ):
+        for count in (3, 5, 8):
+            with self.subTest(participant_count=count):
+                participants = [
+                    chr(ord("A") + index)
+                    for index in range(count)
+                ]
+
+                result = run_double_elimination(
+                    participants,
+                    lambda player_1, player_2, stage: player_1,
+                )
+
+                self.assertIn(result["champion"], participants)
+                self.assertEqual(
+                    set(result["losses"]),
+                    set(participants),
+                )
+
+                for participant, loss_count in result["losses"].items():
+                    if participant == result["champion"]:
+                        self.assertLess(loss_count, 2)
+                    else:
+                        self.assertEqual(loss_count, 2)
+
+                # Every recorded match must have a valid winner.
+                for round_matches in result["rounds"]:
+                    for match in round_matches:
+                        self.assertIn(
+                            match["winner"],
+                            (
+                                match["participant_1"],
+                                match["participant_2"],
+                            ),
+                        )
+
+    @patch(
+        "all_in_randomizer.randomizers.tournament.random.sample",
+        side_effect=lambda items, count: list(items),
+    )
+    def test_double_elimination_reset_occurs_when_undefeated_finalist_loses(
+        self, mock_sample
+    ):
+        def choose_winner(player_1, player_2, stage):
+            if stage == "Grand Final":
+                return player_2
+
+            if stage == "Grand Final Reset":
+                return player_1
+
+            return player_1
+
+        result = run_double_elimination(
+            ["Alice", "Bob"],
+            choose_winner,
+        )
+
+        self.assertEqual(result["champion"], "Alice")
+        self.assertEqual(
+            [round_matches[0]["stage"] for round_matches in result["rounds"]],
+            [
+                "Winners Bracket",
+                "Grand Final",
+                "Grand Final Reset",
+            ],
+        )
+        self.assertEqual(result["losses"]["Alice"], 1)
+        self.assertEqual(result["losses"]["Bob"], 2)
+
+    @patch(
+        "all_in_randomizer.randomizers.tournament.random.sample",
+        side_effect=lambda items, count: list(items),
+    )
+    def test_double_elimination_does_not_reset_when_undefeated_finalist_wins(
+        self, mock_sample
+    ):
+        result = run_double_elimination(
+            ["Alice", "Bob"],
+            lambda player_1, player_2, stage: player_1,
+        )
+
+        self.assertEqual(result["champion"], "Alice")
+        self.assertEqual(
+            result["rounds"][-1][0]["stage"],
+            "Grand Final",
+        )
+        self.assertNotIn(
+            "Grand Final Reset",
+            [
+                match["stage"]
+                for round_matches in result["rounds"]
+                for match in round_matches
+            ],
+        )
+        self.assertEqual(result["losses"]["Alice"], 0)
+        self.assertEqual(result["losses"]["Bob"], 2)
+
+    @patch(
+        "all_in_randomizer.randomizers.tournament.random.sample",
+        side_effect=lambda items, count: list(items),
+    )
+    def test_double_elimination_never_records_more_than_two_losses(
+        self, mock_sample
+    ):
+        for count in (2, 3, 4, 5, 8):
+            with self.subTest(participant_count=count):
+                participants = [
+                    chr(ord("A") + index)
+                    for index in range(count)
+                ]
+
+                result = run_double_elimination(
+                    participants,
+                    lambda player_1, player_2, stage: player_1,
+                )
+
+                self.assertTrue(
+                    all(
+                        loss_count <= 2
+                        for loss_count in result["losses"].values()
+                    )
+                )
+
 
 
 if __name__ == "__main__":

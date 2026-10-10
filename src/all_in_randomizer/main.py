@@ -54,6 +54,8 @@ from all_in_randomizer.randomizers.tournament import (
     generate_tournament_draw,
     record_match_winner,
     generate_next_round,
+    run_single_elimination,
+    run_double_elimination,
 )
 from all_in_randomizer.randomizers.cards import (
     create_standard_deck,
@@ -86,6 +88,13 @@ from all_in_randomizer.randomizers.games import (
     play_claw_machine,
     play_roulette,
     spin_slot_machine,
+)
+from all_in_randomizer.randomizers.social import (
+    generate_truth_or_dare,
+    generate_conversation_starter,
+    generate_charades_prompt,
+    generate_drawing_prompt,
+    assign_mafia_roles,
 )
 
 # Each category lists only the randomizers that are implemented so far.
@@ -150,7 +159,13 @@ CATEGORIES = {
         ("9", "Create and shuffle a UNO deck"),
         ("10", "Draw UNO cards"),
     ]),
-    "8": ("Social Themed Randomizers", []),
+    "8": ("Social Themed Randomizers", [
+        ("1", "Truth or Dare"),
+        ("2", "Conversation Starters"),
+        ("3", "Charades"),
+        ("4", "Drawing Prompts"),
+        ("5", "Mafia Role Assignment"),
+    ]),
     "9": ("Writing", [
         ("1", "Name Generator"),
         ("2", "Story Prompt"),
@@ -405,6 +420,7 @@ def _run_randomizer(category: str, option: str) -> None:
 
         # TOURNAMENT RANDOMIZER
     
+    
     # TOURNAMENT RANDOMIZER
     elif category == "6":
         if option == "1":
@@ -418,104 +434,107 @@ def _run_randomizer(category: str, option: str) -> None:
             "Enter participant names separated by commas: "
         )
 
-        result = generate_tournament_draw(
+        def choose_match_winner(
+            participant_1: str,
+            participant_2: str,
+            stage: str,
+        ) -> str:
+            print(f"\n[{stage}]")
+            print(f"1. {participant_1}")
+            print(f"2. {participant_2}")
+
+            while True:
+                choice = input(
+                    "Enter 1, 2, or the winner's name: "
+                ).strip()
+
+                if choice == "1":
+                    return participant_1
+                if choice == "2":
+                    return participant_2
+                if choice.casefold() == participant_1.casefold():
+                    return participant_1
+                if choice.casefold() == participant_2.casefold():
+                    return participant_2
+
+                print("Invalid winner. Please choose one of the two participants.")
+
+        if tournament_format == "double elimination":
+            result = run_double_elimination(
+                participants,
+                choose_match_winner,
+            )
+
+            print("\n" + "=" * 35)
+            print("DOUBLE-ELIMINATION TOURNAMENT COMPLETE")
+            print("=" * 35)
+            print(f"Champion: {result['champion']}")
+            print("\nFinal loss counts:")
+
+            for participant, loss_count in result["losses"].items():
+                status = (
+                    "Champion"
+                    if participant == result["champion"]
+                    else "Eliminated"
+                    if loss_count >= 2
+                    else "Still active"
+                )
+                print(f"{participant}: {loss_count} loss(es) — {status}")
+
+            return
+
+        # Single-elimination tournament
+        tournament = generate_tournament_draw(
             participants,
             tournament_format,
         )
 
-        print(f"\nFormat: {result['format']}")
-        print(f"Participants: {', '.join(result['participants'])}")
-        print(f"Byes: {result['bye_count']}")
+        print(f"\nFormat: {tournament['format']}")
+        print(f"Participants: {', '.join(tournament['participants'])}")
+        print(f"Byes: {tournament['bye_count']}")
 
-        current_round = result["opening_round"]
+        current_round = tournament["opening_round"]
+        rounds = []
+        round_number = 1
 
-        # Single elimination: play every round until one champion remains.
-        if option == "1":
-            round_number = 1
-
-            while current_round:
-                print(f"\n--- Round {round_number} ---")
-
-                for match in current_round:
-                    participant_1 = match["participant_1"]
-                    participant_2 = match["participant_2"]
-
-                    if match["bye"]:
-                        print(
-                            f"{participant_1} advances with a BYE."
-                        )
-                        continue
-
-                    print(f"\nMatch {match['match']}:")
-                    print(f"1. {participant_1}")
-                    print(f"2. {participant_2}")
-
-                    while True:
-                        choice = input(
-                            "Enter 1, 2, or the winner's name: "
-                        ).strip()
-
-                        if choice == "1":
-                            winner = participant_1
-                        elif choice == "2":
-                            winner = participant_2
-                        elif choice.casefold() == participant_1.casefold():
-                            winner = participant_1
-                        elif choice.casefold() == participant_2.casefold():
-                            winner = participant_2
-                        else:
-                            print(
-                                "Invalid winner. Enter 1, 2, "
-                                "or one of the participant names."
-                            )
-                            continue
-
-                        record_match_winner(match, winner)
-                        print(f"Winner: {winner}")
-                        break
-
-                winners = [
-                    match["winner"]
-                    for match in current_round
-                ]
-
-                if len(winners) == 1:
-                    champion = winners[0]
-                    break
-
-                current_round = generate_next_round(current_round)
-                round_number += 1
-
-            print("\n" + "=" * 35)
-            print("TOURNAMENT COMPLETE")
-            print("=" * 35)
-            print(f"Champion: {champion}")
-
-        # Double elimination remains an opening-draw-only feature for now.
-        else:
-            print(
-                f"Opening round ({len(current_round)} matchups):"
-            )
+        while current_round:
+            print(f"\n--- Round {round_number} ---")
+            completed_round = []
 
             for match in current_round:
                 participant_1 = match["participant_1"]
                 participant_2 = match["participant_2"]
 
                 if match["bye"]:
-                    print(
-                        f"Match {match['match']}: "
-                        f"{participant_1} advances with a BYE"
-                    )
-                else:
-                    print(
-                        f"Match {match['match']}: "
-                        f"{participant_1} vs {participant_2}"
-                    )
+                    print(f"{participant_1} advances with a BYE.")
+                    completed_round.append(match)
+                    continue
 
-            print(
-                "Double-elimination match progression "
-                "will be integrated in the next step."
-            )
+                match["winner"] = None
+                winner = choose_match_winner(
+                    participant_1,
+                    participant_2,
+                    f"Round {round_number}",
+                )
+
+                record_match_winner(match, winner)
+                completed_round.append(match)
+                print(f"Winner: {winner}")
+
+            rounds.append(completed_round)
+
+            if len(completed_round) == 1:
+                champion = completed_round[0]["winner"]
+                break
+
+            current_round = generate_next_round(completed_round)
+            round_number += 1
+
+        print("\n" + "=" * 35)
+        print("SINGLE-ELIMINATION TOURNAMENT COMPLETE")
+        print("=" * 35)
+        print(f"Champion: {champion}")
+
     
         # CARDS RANDOMIZER
     elif category == "7":
@@ -607,6 +626,43 @@ def _run_randomizer(category: str, option: str) -> None:
                 else:
                     print(f"{color} {name}")
             print(f"Cards remaining: {len(deck)}")
+
+    # SOCIAL THEMED RANDOMIZERS
+    elif category == "8":
+        if option == "1":
+            kind = input("Choose truth or dare: ").strip().lower()
+            print(f"{kind.title()}: {generate_truth_or_dare(kind)}")
+
+        elif option == "2":
+            print("Conversation starter:", generate_conversation_starter())
+
+        elif option == "3":
+            print("Charades prompt:", generate_charades_prompt())
+
+        elif option == "4":
+            print("Drawing prompt:", generate_drawing_prompt())
+
+        elif option == "5":
+            players = read_comma_separated_items(
+                "Enter player names separated by commas: "
+            )
+            special_roles = _ask_yes_no(
+                "Include Detective and Doctor roles when possible? (y/n): "
+            )
+            default_count = max(1, len(players) // 3)
+            raw_count = input(
+                f"Number of Mafia members (Enter for {default_count}): "
+            ).strip()
+            mafia_count = int(raw_count) if raw_count else None
+            assignments = assign_mafia_roles(
+                players,
+                mafia_count=mafia_count,
+                include_special_roles=special_roles,
+            )
+
+            print("\\nMafia role assignments (keep these private):")
+            for player, role in assignments.items():
+                print(f"{player}: {role}")
 
         # WRITING RANDOMIZERS
     elif category == "9":
@@ -778,6 +834,16 @@ def _run_randomizer(category: str, option: str) -> None:
                     choice = input("Choose a bet: ").strip().lower()
 
                     if choice == "x":
+                        # Bets that were never spun are returned, not lost.
+                        refund = sum(stake for _, _, stake in bets)
+                        credits += refund
+
+                        if refund:
+                            print(
+                                f"\nYour unplayed bets ({refund} credits) "
+                                "were returned."
+                            )
+
                         print(
                             f"\nYou leave roulette with {credits} credits."
                         )
@@ -990,7 +1056,12 @@ def _run_randomizer(category: str, option: str) -> None:
                 print("You didn't win a prize this time.")
 
             print("Thanks for playing!")
-            
+
+        elif option in ("5", "6"):
+            game_name = dict(CATEGORIES["10"][1])[option]
+            print(f"{game_name} is planned but not implemented yet.")
+
+
 def main() -> None:
     """Run the category-based All-in Randomizer command-line menu."""
     print("Welcome to All-in Randomizer!")
