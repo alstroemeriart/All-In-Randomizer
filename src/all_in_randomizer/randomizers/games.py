@@ -240,3 +240,23 @@ def play_claw_machine(
         "prize": prize,
         "success_probability": success_probability,
     }
+
+def play_three_cups(guess: int) -> dict[str, int | bool]:
+    """Play one round of the Three Cups Game.
+
+    The player guesses which of three cups hides the ball.
+    Returns the player's guess, the winning cup, and the result.
+    """
+    if not isinstance(guess, int) or isinstance(guess, bool):
+        raise TypeError("Cup choice must be an integer.")
+
+    if guess not in (1, 2, 3):
+        raise ValueError("Choose cup 1, 2, or 3.")
+
+    winning_cup = random.randint(1, 3)
+
+    return {
+        "guess": guess,
+        "winning_cup": winning_cup,
+        "won": guess == winning_cup,
+    }

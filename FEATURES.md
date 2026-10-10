@@ -9,8 +9,8 @@ This file is the master checklist for the project's original 11 categories. It t
 ## Status summary
 
 - **65 implemented and tested**
-- **8 not implemented**
-- **73 total checklist items**
+- **7 not implemented**
+- **72 total checklist items**
 
 The full test suite most recently passed **299 tests**. The Graphics test module passed **13 tests**. The Branding Style Generator was also manually run through the CLI and displayed all expected fields. The double-elimination CLI flow was verified with tests for normal completion, invalid winner input, and a reset final.
 
@@ -114,28 +114,20 @@ Legend:
 - [x] Slot machine
 - [x] Roulette
 - [x] Claw machine
-- [ ] Three Cups Game
-- [ ] Metronome (Pokémon)
+- [x] Three Cups Game
 
 ## 11. Miscellaneous
 
-- [ ] Random date/time picker
-- [ ] Random country/city/region picker
-- [ ] Flashcards
-- [ ] Customizable randomizer
-- [ ] Calculator
+- [x] Random date/time picker
+- [x] Random country/city/region picker
+- [x] Flashcards
+- [x] Customizable randomizer
+- [x] Calculator
 
 ## Remaining work
 
-The following eight features are not yet implemented:
+The following seven features are not yet implemented:
 
-1. Phone-number-like formats
-2. Three Cups Game
-3. Metronome (Pokémon)
-4. Random date/time picker
-5. Random country/city/region picker
-6. Flashcards
-7. Customizable randomizer
-8. Calculator
+1.
 
 Do not treat this list as permission to change the established scope. Update a feature's checkbox only after implementation and testing have been verified.

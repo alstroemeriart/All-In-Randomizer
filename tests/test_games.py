@@ -12,6 +12,7 @@ from all_in_randomizer.randomizers.games import (
     play_claw_machine,
     play_roulette,
     spin_slot_machine,
+    play_three_cups,
 )
 
 
@@ -184,6 +185,55 @@ class TestGachaSimulator(unittest.TestCase):
     def test_claw_machine_rejects_invalid_probability(self):
         with self.assertRaises(ValueError):
             play_claw_machine(DEFAULT_CLAW_PRIZES, 1.5)
+
+class TestThreeCups(unittest.TestCase):
+
+    @patch("all_in_randomizer.randomizers.games.random.randint")
+    def test_player_wins_when_guess_matches_ball(self, mock_randint):
+        mock_randint.return_value = 2
+
+        result = play_three_cups(2)
+
+        self.assertEqual(result["guess"], 2)
+        self.assertEqual(result["winning_cup"], 2)
+        self.assertTrue(result["won"])
+
+    @patch("all_in_randomizer.randomizers.games.random.randint")
+    def test_player_loses_when_guess_does_not_match_ball(
+        self, mock_randint
+    ):
+        mock_randint.return_value = 3
+
+        result = play_three_cups(1)
+
+        self.assertEqual(result["guess"], 1)
+        self.assertEqual(result["winning_cup"], 3)
+        self.assertFalse(result["won"])
+
+    @patch("all_in_randomizer.randomizers.games.random.randint")
+    def test_random_cup_is_selected_from_one_to_three(self, mock_randint):
+        mock_randint.return_value = 1
+
+        result = play_three_cups(1)
+
+        mock_randint.assert_called_once_with(1, 3)
+        self.assertEqual(result["winning_cup"], 1)
+
+    def test_rejects_choice_below_one(self):
+        with self.assertRaises(ValueError):
+            play_three_cups(0)
+
+    def test_rejects_choice_above_three(self):
+        with self.assertRaises(ValueError):
+            play_three_cups(4)
+
+    def test_rejects_non_integer_choice(self):
+        with self.assertRaises(TypeError):
+            play_three_cups("2")
+
+    def test_rejects_boolean_choice(self):
+        with self.assertRaises(TypeError):
+            play_three_cups(True)
 
 
 if __name__ == "__main__":

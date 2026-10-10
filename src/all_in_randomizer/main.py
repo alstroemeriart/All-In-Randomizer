@@ -1,6 +1,14 @@
 import time
 import random
+from datetime import datetime
 
+from all_in_randomizer.randomizers.miscellaneous import (
+    generate_random_datetime,
+    pick_random_location,
+    check_flashcard_answers,
+    choose_custom_items,
+    calculate,
+)
 from all_in_randomizer.randomizers.dice import (
     STANDARD_DICE,
     roll_dice,
@@ -89,6 +97,7 @@ from all_in_randomizer.randomizers.games import (
     play_claw_machine,
     play_roulette,
     spin_slot_machine,
+    play_three_cups,
 )
 from all_in_randomizer.randomizers.social import (
     generate_truth_or_dare,
@@ -180,9 +189,14 @@ CATEGORIES = {
         ("3", "Roulette"),
         ("4", "Claw Machines"),
         ("5", "Three Cups Game"),
-        ("6", "Metronome (Pokémon)"),
     ]),
-    "11": ("Miscellaneous", []),
+    "11": ("Miscellaneous", [
+        ("1", "Random date/time picker"),
+        ("2", "Random country/city/region picker"),
+        ("3", "Flashcards"),
+        ("4", "Customizable randomizer"),
+        ("5", "Calculator"),
+    ]),
 }
 
 
@@ -433,7 +447,6 @@ def _run_randomizer(category: str, option: str) -> None:
                 print(f"{participant}: {role}")
 
         # TOURNAMENT RANDOMIZER
-    
     
     # TOURNAMENT RANDOMIZER
     elif category == "6":
@@ -1071,10 +1084,178 @@ def _run_randomizer(category: str, option: str) -> None:
 
             print("Thanks for playing!")
 
-        elif option in ("5", "6"):
-            game_name = dict(CATEGORIES["10"][1])[option]
-            print(f"{game_name} is planned but not implemented yet.")
+        elif option == "5":
+            print("\n--- Three Cups Game ---")
+            print("A ball is hidden under one of three cups.")
+            print("Choose the cup you think contains the ball.")
 
+            while True:
+                choice_text = input("Choose cup (1, 2, or 3): ").strip()
+
+                try:
+                    choice = int(choice_text)
+                    result = play_three_cups(choice)
+                except ValueError as error:
+                    print(f"Invalid choice: {error}")
+                    continue
+                except TypeError as error:
+                    print(f"Invalid choice: {error}")
+                    continue
+
+                print(f"\nYou chose cup {result['guess']}.")
+                print(f"The ball was under cup {result['winning_cup']}.")
+
+                if result["won"]:
+                    print("You win!")
+                else:
+                    print("You lose!")
+
+                replay = input("\nPlay again? (y/n): ").strip().lower()
+
+                if replay not in ("y", "yes"):
+                    print("Thanks for playing!")
+                    break
+        # MISCELLANEOUS
+    elif category == "11":
+        if option == "1":
+            print("\n--- Random Date/Time Picker ---")
+            print("Use the format YYYY-MM-DD HH:MM")
+            print("Example: 2026-01-01 09:00")
+
+            start_text = input("Start date and time: ").strip()
+            end_text = input("End date and time: ").strip()
+
+            start = datetime.strptime(start_text, "%Y-%m-%d %H:%M")
+            end = datetime.strptime(end_text, "%Y-%m-%d %H:%M")
+
+            result = generate_random_datetime(start, end)
+            print("Random date/time:", result.strftime("%Y-%m-%d %H:%M"))
+
+        elif option == "2":
+            print("\n--- Random Location Picker ---")
+            print("1. Random country")
+            print("2. Random region")
+            print("3. Random city")
+
+            level_choice = input("Choose a location level: ").strip()
+            levels = {
+                "1": "country",
+                "2": "region",
+                "3": "city",
+            }
+
+            if level_choice not in levels:
+                raise ValueError("Choose 1, 2, or 3.")
+
+            result = pick_random_location(levels[level_choice])
+
+            print("\nRandom location:")
+            for field, value in result.items():
+                print(f"{field.title()}: {value}")
+
+        elif option == "3":
+            print("\n--- Flashcards ---")
+            print("Enter each question and answer.")
+            print("Leave the question blank when you're finished.")
+
+            flashcards = []
+
+            while True:
+                question = input("\nQuestion: ").strip()
+
+                if not question:
+                    break
+
+                answer = input("Correct answer: ").strip()
+
+                if not answer:
+                    print("The answer cannot be blank.")
+                    continue
+
+                flashcards.append((question, answer))
+
+            if not flashcards:
+                print("No flashcards were created.")
+                return
+
+            answers = []
+
+            print("\n--- Flashcard Quiz ---")
+            for index, (question, _correct_answer) in enumerate(
+                flashcards, start=1
+            ):
+                print(f"\nCard {index}: {question}")
+                answers.append(input("Your answer: "))
+
+            result = check_flashcard_answers(flashcards, answers)
+
+            print(f"\nScore: {result['score']}/{result['total']}")
+
+            for index, card_result in enumerate(
+                result["results"], start=1
+            ):
+                status = "Correct" if card_result["correct"] else "Incorrect"
+                print(f"\nCard {index}: {status}")
+
+                if not card_result["correct"]:
+                    print(
+                        "Correct answer:",
+                        card_result["correct_answer"],
+                    )
+
+        elif option == "4":
+            print("\n--- Customizable Randomizer ---")
+
+            items = read_comma_separated_items(
+                "Enter your choices separated by commas: "
+            )
+
+            count = int(
+                input(
+                    f"How many choices? (1-{len(items)}): "
+                )
+            )
+
+            weighted = _ask_yes_no(
+                "Use custom weights? (y/n): "
+            )
+
+            weights = None
+
+            if weighted:
+                raw_weights = read_comma_separated_items(
+                    "Enter one weight per choice, separated by commas: "
+                )
+
+                try:
+                    weights = [float(weight) for weight in raw_weights]
+                except ValueError as error:
+                    raise ValueError(
+                        "Every weight must be a number."
+                    ) from error
+
+            result = choose_custom_items(items, count, weights)
+
+            print("\nSelected result(s):")
+            for index, item in enumerate(result, start=1):
+                print(f"{index}. {item}")
+
+        elif option == "5":
+            print("\n--- Calculator ---")
+            print("Supported: +, -, *, /, //, %, **, parentheses")
+            print("Enter Q to return to the menu.")
+
+            while True:
+                expression = input("\nExpression: ").strip()
+
+                if expression.lower() == "q":
+                    break
+
+                try:
+                    result = calculate(expression)
+                    print("Result:", result)
+                except (ValueError, TypeError) as error:
+                    print(f"Calculation error: {error}")
 
 def main() -> None:
     """Run the category-based All-in Randomizer command-line menu."""

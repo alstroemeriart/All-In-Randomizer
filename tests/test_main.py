@@ -78,8 +78,8 @@ class TestMain(unittest.TestCase):
         self.assertIn("Ace of Hearts", printed_text)
         self.assertIn("King of Spades", printed_text)
 
-    @patch("builtins.input", side_effect=["10", "5", "", "b", "0"])
-    def test_unimplemented_game_says_so(self, mock_input):
+    @patch("builtins.input", side_effect=["10", "15", "", "b", "0"])
+    def test_games_menu_handles_invalid_option(self, mock_input):
         with patch("builtins.print") as mock_print:
             main()
 
@@ -90,7 +90,7 @@ class TestMain(unittest.TestCase):
         )
 
         self.assertIn(
-            "Three Cups Game is planned but not implemented yet.",
+            "Invalid option. Choose one of the listed options or B to go back.",
             printed_text,
         )
 
