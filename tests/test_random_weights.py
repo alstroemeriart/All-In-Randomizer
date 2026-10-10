@@ -1,10 +1,12 @@
+"""Tests for weighted item selection."""
+
 import unittest
 
 from all_in_randomizer.core.random_weights import choose_weighted
 
 
 class TestChooseWeighted(unittest.TestCase):
-
+    """Check weighted choices and invalid item or weight inputs."""
     def test_result_is_from_the_items(self):
         items = ["Common", "Rare", "Legendary"]
         weights = [80, 15, 5]

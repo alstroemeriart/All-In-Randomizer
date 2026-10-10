@@ -1,3 +1,4 @@
+"""Tests for interactive Blackjack input, output, and round flow."""
 
 import unittest
 from unittest.mock import patch
@@ -8,8 +9,8 @@ from all_in_randomizer.randomizers.cards import (
 
 
 class TestInteractiveBlackjack(unittest.TestCase):
+    """Cover terminal play using controlled input and a fixed deck."""
 
-    
     @patch(
         "all_in_randomizer.randomizers.cards.random.sample",
         side_effect=lambda population, count: list(population[:count]),

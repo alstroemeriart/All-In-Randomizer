@@ -1,7 +1,8 @@
+"""Small chance-based games and simulations."""
 
-from collections import Counter
-import random
 import math
+import random
+from collections import Counter
 
 from all_in_randomizer.core.random_weights import choose_weighted
 
@@ -21,7 +22,7 @@ def simulate_gacha(
     rarities: tuple[str, ...] = DEFAULT_RARITIES,
     weights: tuple[float, ...] = DEFAULT_WEIGHTS,
 ) -> list[str]:
-    """Simulate gacha pulls and return the rarity of each result."""
+    """Simulate independent weighted pulls and return each rarity."""
     if not isinstance(pull_count, int) or isinstance(pull_count, bool):
         raise TypeError("Pull count must be an integer.")
 
@@ -77,9 +78,7 @@ def summarize_gacha(
     }
 
 
-# --------------------------------------------------
-# SLOT MACHINE
-# --------------------------------------------------
+# Slot machine
 
 SLOT_SYMBOLS = ("Cherry", "Lemon", "Bell", "Star", "Seven")
 
@@ -113,9 +112,7 @@ def spin_slot_machine() -> dict:
     }
 
 
-# --------------------------------------------------
-# ROULETTE
-# --------------------------------------------------
+# Roulette
 
 RED_NUMBERS = {
     1, 3, 5, 7, 9, 12, 14, 16, 18,
@@ -128,7 +125,11 @@ def play_roulette(
     selection: str | int,
     winning_number: int | None = None,
 ) -> dict:
-    """Play European roulette using a single bet."""
+    """Play one European roulette bet and report its payout multiplier.
+
+    Pass ``winning_number`` to use a fixed result; otherwise a number from
+    0 through 36 is drawn.
+    """
     valid_bets = ("number", "red/black", "odd/even", "low/high")
 
     if bet_type not in valid_bets:
@@ -201,9 +202,7 @@ def play_roulette(
     }
 
 
-# --------------------------------------------------
-# CLAW MACHINE
-# --------------------------------------------------
+# Claw machine
 
 DEFAULT_CLAW_PRIZES = (
     "Plush Bear",
@@ -241,12 +240,9 @@ def play_claw_machine(
         "success_probability": success_probability,
     }
 
-def play_three_cups(guess: int) -> dict[str, int | bool]:
-    """Play one round of the Three Cups Game.
 
-    The player guesses which of three cups hides the ball.
-    Returns the player's guess, the winning cup, and the result.
-    """
+def play_three_cups(guess: int) -> dict[str, int | bool]:
+    """Hide a ball under one of three cups and check the player's guess."""
     if not isinstance(guess, int) or isinstance(guess, bool):
         raise TypeError("Cup choice must be an integer.")
 

@@ -1,3 +1,5 @@
+"""Tests for shared integer and decimal generators."""
+
 import unittest
 from unittest.mock import patch
 
@@ -8,8 +10,9 @@ from all_in_randomizer.core.random_numbers import (
     generate_even_integer,
 )
 
-class TestRandomNumbers(unittest.TestCase):
 
+class TestRandomNumbers(unittest.TestCase):
+    """Check bounds, parity, precision, and invalid number ranges."""
     def test_integer_is_within_range(self):
         for _ in range(100):
             result = generate_integer(1, 6)

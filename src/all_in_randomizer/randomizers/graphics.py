@@ -1,3 +1,5 @@
+"""Random color, font, and branding suggestions."""
+
 import colorsys
 import random
 

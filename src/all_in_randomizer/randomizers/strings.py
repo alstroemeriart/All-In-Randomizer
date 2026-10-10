@@ -1,3 +1,5 @@
+"""Generators for usernames, identifiers, passwords, and text styles."""
+
 import random
 import secrets
 import string
@@ -141,7 +143,10 @@ def generate_password(
     use_digits: bool = True,
     use_symbols: bool = True,
 ) -> str:
-    """Generate a password with requested character groups."""
+    """Generate a password containing each enabled character group.
+
+    Characters are selected with ``secrets`` and shuffled securely.
+    """
     _validate_length(length)
 
     options = {

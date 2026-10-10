@@ -1,6 +1,7 @@
+"""Fair and weighted coin-flip helpers."""
 
-import random
 import math
+import random
 
 
 def flip_coin() -> str:

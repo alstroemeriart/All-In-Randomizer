@@ -16,6 +16,7 @@ from all_in_randomizer.randomizers.social import (
 
 
 class TestSocialPrompts(unittest.TestCase):
+    """Check that social prompts come from their built-in lists."""
     def test_truth_prompt(self):
         self.assertIn(generate_truth_or_dare("truth"), TRUTH_PROMPTS)
 
@@ -44,6 +45,7 @@ class TestSocialPrompts(unittest.TestCase):
 
 
 class TestMafiaRoles(unittest.TestCase):
+    """Check Mafia role counts and participant validation."""
     def test_one_role_per_player(self):
         players = ["Alex", "Bea", "Chris", "Dani", "Eli", "Fran"]
         result = assign_mafia_roles(players)

@@ -1,3 +1,5 @@
+"""Tests for formatted and constrained number generators."""
+
 import unittest
 from fractions import Fraction
 
@@ -11,7 +13,7 @@ from all_in_randomizer.randomizers.numbers import (
 
 
 class TestNumberRandomizers(unittest.TestCase):
-
+    """Check number formats, ranges, and validation rules."""
     def test_positive_integer_stays_in_range(self):
         result = generate_range_number(1, 10, "positive")
         self.assertIsInstance(result, int)

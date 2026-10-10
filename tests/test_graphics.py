@@ -1,3 +1,5 @@
+"""Tests for generated colors, palettes, fonts, and branding."""
+
 import re
 import unittest
 
@@ -11,7 +13,7 @@ from all_in_randomizer.randomizers.graphics import (
 
 
 class TestGraphics(unittest.TestCase):
-
+    """Check graphics suggestions have valid shapes and values."""
     def test_hex_color_has_valid_format(self):
         color = generate_hex_color()
         self.assertRegex(color, r"^#[0-9A-F]{6}$")

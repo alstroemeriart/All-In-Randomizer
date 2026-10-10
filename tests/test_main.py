@@ -1,13 +1,15 @@
+"""Tests for the terminal application's menu flow."""
+
+from contextlib import redirect_stdout
+from io import StringIO
 import unittest
 from unittest.mock import patch
 
 from all_in_randomizer.main import main
-from contextlib import redirect_stdout
-from io import StringIO
 
 
 class TestMain(unittest.TestCase):
-
+    """Check that the main menu responds correctly to user input."""
     @patch("builtins.input", return_value="0")
     @patch("builtins.print")
     def test_main_exits_from_category_menu(self, mock_print, mock_input):

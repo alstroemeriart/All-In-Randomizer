@@ -1,3 +1,5 @@
+"""Helpers for choosing and shuffling items."""
+
 import random
 
 
@@ -10,7 +12,11 @@ def choose_random(items: list) -> object:
 
 
 def choose_multiple(items: list, count: int) -> list:
-    """Choose several unique positions without replacement."""
+    """Choose distinct list positions without replacement.
+
+    Equal values can still appear more than once when they occupy separate
+    positions in the input.
+    """
     if not isinstance(count, int) or isinstance(count, bool):
         raise TypeError("Count must be an integer.")
 
@@ -24,7 +30,7 @@ def choose_multiple(items: list, count: int) -> list:
 
 
 def shuffle_items(items: list) -> list:
-    """Return a shuffled list copy of any sequence (list, tuple, ...)."""
+    """Return a shuffled copy without changing the input sequence."""
     shuffled = list(items)
     random.shuffle(shuffled)
     return shuffled

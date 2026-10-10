@@ -1,5 +1,7 @@
-import random
+"""Number formats and constrained numeric generators."""
+
 import math
+import random
 from fractions import Fraction
 
 from all_in_randomizer.core.random_numbers import (
@@ -61,7 +63,6 @@ def generate_phone_number(pattern: str = "(###) ###-####") -> str:
         str(random.randint(0, 9)) if character == "#" else character
         for character in pattern
     )
-
 
 
 def generate_fraction(

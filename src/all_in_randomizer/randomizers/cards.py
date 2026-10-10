@@ -1,3 +1,5 @@
+"""Standard playing cards, Blackjack, Tarot, and UNO deck helpers."""
+
 import random
 
 
@@ -21,6 +23,7 @@ RANKS = (
 
 Card = tuple[str, str]
 
+
 def validate_standard_deck(deck: list[Card]) -> None:
     """Validate that a deck contains unique, valid standard playing cards."""
     if not isinstance(deck, list):
@@ -37,6 +40,7 @@ def validate_standard_deck(deck: list[Card]) -> None:
 
     if len(set(deck)) != 52:
         raise ValueError("A standard deck cannot contain duplicate cards.")
+
 
 def create_standard_deck() -> list[Card]:
     """Create and return a standard 52-card playing deck."""
@@ -57,7 +61,10 @@ def shuffle_deck() -> list[Card]:
 
 
 def draw_cards(deck: list[Card], count: int = 1) -> list[Card]:
-    """Draw cards and remove them from the supplied deck."""
+    """Draw random cards and remove them from the supplied deck.
+
+    The deck is updated in place so drawn cards cannot be dealt again.
+    """
     if not isinstance(deck, list):
         raise TypeError("Deck must be provided as a list.")
 
@@ -81,6 +88,7 @@ def draw_single_card(deck: list[Card]) -> Card:
     """Draw and return one card from the supplied deck."""
     drawn_cards = draw_cards(deck, 1)
     return drawn_cards[0]
+
 
 def deal_hands(
     deck: list[Card],
@@ -118,7 +126,10 @@ def deal_hands(
 
 
 def calculate_blackjack_score(hand: list[Card]) -> int:
-    """Calculate a Blackjack hand's best score without busting if possible."""
+    """Calculate the highest score that does not bust, when possible.
+
+    Aces start at 11 and are reduced to 1 as needed.
+    """
     score = 0
     ace_count = 0
 
@@ -240,6 +251,7 @@ def play_blackjack_interactive(input_fn=None, output_fn=None) -> dict:
 
     The player can hit, stand, or double down on their first turn.
     The dealer keeps one card hidden until the player's turn ends.
+    Input and output callables can be supplied to control the terminal flow.
     """
     if input_fn is None:
         input_fn = input
@@ -256,6 +268,7 @@ def play_blackjack_interactive(input_fn=None, output_fn=None) -> dict:
     bet_multiplier = 1
 
     def show_hand(hand, title):
+        """Print every card in a hand and its current score."""
         output_fn(f"\n{title}")
 
         for rank, suit in hand:
@@ -266,6 +279,7 @@ def play_blackjack_interactive(input_fn=None, output_fn=None) -> dict:
         )
 
     def show_dealer_with_hidden_card():
+        """Show the dealer's first card while keeping the second concealed."""
         output_fn("\nDealer's hand")
         output_fn(
             f"  {dealer_hand[0][0]} of {dealer_hand[0][1]}"
@@ -449,11 +463,13 @@ def create_tarot_deck() -> list[tuple[str, str]]:
 
     return deck
 
+
 def shuffle_tarot_deck() -> list[tuple[str, str]]:
     """Create and shuffle a complete Tarot deck."""
     deck = create_tarot_deck()
     random.shuffle(deck)
     return deck
+
 
 def draw_tarot_cards(
     deck: list[tuple[str, str]],
@@ -488,7 +504,11 @@ UNO_ACTION_CARDS = ("Skip", "Reverse", "Draw Two")
 
 
 def create_uno_deck() -> list[tuple[str, str]]:
-    """Create a standard 108-card UNO-style deck."""
+    """Create a standard 108-card UNO-style deck.
+
+    This includes two copies of each colored 1–9 and action card, one zero
+    per color, and four of each wild card.
+    """
     deck = []
 
     for color in UNO_COLORS:
@@ -512,11 +532,13 @@ def create_uno_deck() -> list[tuple[str, str]]:
 
     return deck
 
+
 def shuffle_uno_deck() -> list[tuple[str, str]]:
     """Create and shuffle an UNO-style deck."""
     deck = create_uno_deck()
     random.shuffle(deck)
     return deck
+
 
 def draw_uno_cards(
     deck: list[tuple[str, str]],

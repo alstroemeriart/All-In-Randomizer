@@ -1,5 +1,7 @@
-import unittest
+"""Tests for date, location, flashcard, picker, and calculator helpers."""
+
 from datetime import datetime
+import unittest
 from unittest.mock import patch
 
 from all_in_randomizer.randomizers.miscellaneous import (
@@ -12,6 +14,7 @@ from all_in_randomizer.randomizers.miscellaneous import (
 
 
 class TestRandomDateTime(unittest.TestCase):
+    """Check random datetime bounds and invalid ranges."""
     def test_generates_datetime_within_range(self):
         start = datetime(2026, 1, 1, 9, 0)
         end = datetime(2026, 1, 2, 18, 0)
@@ -42,6 +45,7 @@ class TestRandomDateTime(unittest.TestCase):
 
 
 class TestLocationPicker(unittest.TestCase):
+    """Check location levels and returned location fields."""
     def test_country_result(self):
         result = pick_random_location("country")
 
@@ -70,6 +74,7 @@ class TestLocationPicker(unittest.TestCase):
 
 
 class TestFlashcards(unittest.TestCase):
+    """Check answer matching and flashcard score summaries."""
     def setUp(self):
         self.cards = [
             ("Capital of Japan?", "Tokyo"),
@@ -116,6 +121,7 @@ class TestFlashcards(unittest.TestCase):
 
 
 class TestCustomRandomizer(unittest.TestCase):
+    """Check item selection with and without weights."""
     def test_selects_requested_number_of_items(self):
         result = choose_custom_items(["A", "B", "C", "D"], 2)
 
@@ -158,6 +164,7 @@ class TestCustomRandomizer(unittest.TestCase):
 
 
 class TestCalculator(unittest.TestCase):
+    """Check supported arithmetic and rejected expressions."""
     def test_addition(self):
         self.assertEqual(calculate("2 + 3"), 5)
 

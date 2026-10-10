@@ -1,3 +1,5 @@
+"""Tests for choosing, sampling, and shuffling items."""
+
 import unittest
 
 from all_in_randomizer.core.random_selection import (
@@ -8,7 +10,7 @@ from all_in_randomizer.core.random_selection import (
 
 
 class TestRandomSelection(unittest.TestCase):
-
+    """Check selection behavior, results, and invalid counts."""
     def test_choose_random_returns_an_item(self):
         items = ["Sword", "Shield", "Potion"]
         self.assertIn(choose_random(items), items)

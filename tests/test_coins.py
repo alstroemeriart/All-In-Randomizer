@@ -1,4 +1,6 @@
 
+"""Tests for fair and weighted coin flips."""
+
 import unittest
 from unittest.mock import patch
 
@@ -10,7 +12,7 @@ from all_in_randomizer.randomizers.coins import (
 
 
 class TestCoins(unittest.TestCase):
-
+    """Check coin outcomes, counts, and probability bounds."""
     def test_flip_coin_returns_valid_outcome(self):
         self.assertIn(flip_coin(), ["Heads", "Tails"])
 

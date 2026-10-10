@@ -1,3 +1,5 @@
+"""Wheels, picks, groups, teams, and role assignments."""
+
 from all_in_randomizer.core.random_selection import (
     choose_random,
     choose_multiple,
@@ -28,7 +30,10 @@ def spin_wheel(items: list[str]) -> str:
 
 
 def elimination_wheel(items: list[str], winners: int = 1) -> dict:
-    """Select winners without selecting the same list position twice."""
+    """Select winners without selecting the same list position twice.
+
+    The returned mapping includes both the winners and items left over.
+    """
     _validate_items(items)
 
     if not isinstance(winners, int) or isinstance(winners, bool):
@@ -100,7 +105,10 @@ def generate_groups(
     items: list[str],
     group_size: int,
 ) -> list[list[str]]:
-    """Shuffle items and divide them into groups of the requested size."""
+    """Shuffle items into groups of at most the requested size.
+
+    The last group may be smaller when the item count does not divide evenly.
+    """
     _validate_items(items)
 
     if not isinstance(group_size, int) or isinstance(group_size, bool):

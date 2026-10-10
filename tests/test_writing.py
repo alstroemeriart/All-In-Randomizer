@@ -1,4 +1,6 @@
 
+"""Tests for name, prompt, genre, and character generators."""
+
 import unittest
 from unittest.mock import patch
 
@@ -21,7 +23,7 @@ from all_in_randomizer.randomizers.writing import (
 
 
 class TestNameGenerator(unittest.TestCase):
-
+    """Check generated names use the built-in name lists."""
     def test_generated_name_is_a_string(self):
         self.assertIsInstance(generate_name(), str)
 
@@ -45,6 +47,7 @@ class TestNameGenerator(unittest.TestCase):
 
 
 class TestStoryPromptGenerator(unittest.TestCase):
+    """Check generated story prompts match the prompt list."""
 
     def test_story_prompt_is_a_string(self):
         self.assertIsInstance(generate_story_prompt(), str)
@@ -67,6 +70,7 @@ class TestStoryPromptGenerator(unittest.TestCase):
 
 
 class TestGenrePromptGenerator(unittest.TestCase):
+    """Check generated genres match the supported genres."""
 
     def test_genre_prompt_is_a_string(self):
         self.assertIsInstance(generate_genre_prompt(), str)
@@ -85,6 +89,7 @@ class TestGenrePromptGenerator(unittest.TestCase):
         mock_choice.assert_called_once_with(GENRES)
 
 class TestDndCharacterGenerator(unittest.TestCase):
+    """Check generated character fields use supported choices."""
 
     def test_generated_character_is_a_dictionary(self):
         character = generate_dnd_character()

@@ -1,3 +1,5 @@
+"""Tests for generated strings, names, identifiers, and passwords."""
+
 import unittest
 
 from all_in_randomizer.randomizers.strings import (
@@ -10,7 +12,7 @@ from all_in_randomizer.randomizers.strings import (
 
 
 class TestStringRandomizers(unittest.TestCase):
-
+    """Check string contents, requested lengths, and validation."""
     def test_alphanumeric_has_requested_length(self):
         result = generate_alphanumeric(20)
         self.assertEqual(len(result), 20)

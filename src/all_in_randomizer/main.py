@@ -1,5 +1,7 @@
-import time
+"""Terminal menus for the All-in Randomizer application."""
+
 import random
+import time
 from datetime import datetime
 
 from all_in_randomizer.randomizers.miscellaneous import (
@@ -213,6 +215,7 @@ def read_comma_separated_items(prompt: str) -> list[str]:
 
 
 def _ask_yes_no(prompt: str) -> bool:
+    """Read a yes/no answer and return it as a boolean."""
     answer = input(prompt).strip().lower()
     if answer not in ("y", "n"):
         raise ValueError("Please enter y or n.")

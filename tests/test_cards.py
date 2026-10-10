@@ -1,5 +1,7 @@
-import unittest
+"""Tests for standard, Blackjack, Tarot, and UNO card helpers."""
+
 from collections import Counter
+import unittest
 from unittest.mock import patch
 
 from all_in_randomizer.randomizers.cards import (
@@ -28,6 +30,7 @@ from all_in_randomizer.randomizers.cards import (
 
 
 class TestCards(unittest.TestCase):
+    """Check standard deck creation, shuffling, drawing, and dealing."""
 
     # Standard deck tests
 
@@ -150,6 +153,7 @@ class TestCards(unittest.TestCase):
             deal_hands("not a deck", 2, 5)
 
 class TestSingleCardDraw(unittest.TestCase):
+    """Check drawing one card and removing it from the deck."""
     def test_draws_exactly_one_card(self):
         deck = create_standard_deck()
 
@@ -182,7 +186,10 @@ class TestSingleCardDraw(unittest.TestCase):
         with self.assertRaises(ValueError):
             draw_single_card([])
 
+
 class TestBlackjack(unittest.TestCase):
+    """Check Blackjack scoring and round outcomes."""
+
     def test_number_cards_are_scored_correctly(self):
         hand = [("2", "Hearts"), ("7", "Spades")]
         self.assertEqual(calculate_blackjack_score(hand), 9)
@@ -318,7 +325,10 @@ class TestBlackjack(unittest.TestCase):
         with self.assertRaises(TypeError):
             play_blackjack([123])
 
+
 class TestTarotDeck(unittest.TestCase):
+    """Check Tarot deck contents, shuffling, and drawing."""
+
     def test_tarot_deck_has_78_cards(self):
         deck = create_tarot_deck()
         self.assertEqual(len(deck), 78)
@@ -387,6 +397,8 @@ class TestTarotDeck(unittest.TestCase):
 
 
 class TestUnoDeck(unittest.TestCase):
+    """Check UNO deck composition, shuffling, and drawing."""
+
     def test_uno_deck_has_108_cards(self):
         self.assertEqual(len(create_uno_deck()), 108)
 
@@ -452,7 +464,9 @@ class TestUnoDeck(unittest.TestCase):
         with self.assertRaises(TypeError):
             draw_uno_cards(create_uno_deck(), 2.5)
 
+
 class TestStandardDeckValidation(unittest.TestCase):
+    """Check validation of standard 52-card decks."""
 
     def test_accepts_a_valid_standard_deck(self):
         deck = create_standard_deck()

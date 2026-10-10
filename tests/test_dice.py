@@ -1,4 +1,6 @@
 
+"""Tests for die rolls, notation, and generated ability scores."""
+
 import unittest
 from unittest.mock import patch
 
@@ -12,7 +14,7 @@ from all_in_randomizer.randomizers.dice import (
 
 
 class TestDice(unittest.TestCase):
-
+    """Check supported dice formats and their validation."""
     def test_roll_die_returns_valid_result(self):
         result = roll_die(6)
         self.assertIn(result, range(1, 7))

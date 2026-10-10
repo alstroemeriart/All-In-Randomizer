@@ -175,7 +175,11 @@ def choose_custom_items(
     count: int = 1,
     weights: list[float] | None = None,
 ) -> list[str]:
-    """Choose items without replacement, optionally using weights."""
+    """Choose items without replacement, optionally using weights.
+
+    Weighted picks remove each chosen item before drawing again, so no item
+    can be selected twice.
+    """
     if not isinstance(items, list) or not items:
         raise ValueError("Provide at least one item.")
 
@@ -248,6 +252,9 @@ def calculate(expression: str) -> int | float:
     """Evaluate supported arithmetic using an explicit AST allowlist.
 
     Supported: +, -, *, /, //, %, **, parentheses, and unary +/-
+
+    The expression is parsed as an AST and only explicitly supported nodes
+    are evaluated; names, calls, and other Python syntax are rejected.
     """
     if not isinstance(expression, str):
         raise TypeError("Expression must be text.")
@@ -261,6 +268,7 @@ def calculate(expression: str) -> int | float:
         raise ValueError("Invalid mathematical expression.") from error
 
     def evaluate(node: ast.AST) -> int | float:
+        """Evaluate one allowed expression node recursively."""
         if isinstance(node, ast.Expression):
             return evaluate(node.body)
 

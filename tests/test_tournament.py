@@ -1,3 +1,5 @@
+"""Tests for tournament draws, match winners, and bracket runners."""
+
 import unittest
 from unittest.mock import patch
 
@@ -12,7 +14,7 @@ from all_in_randomizer.randomizers.tournament import (
 
 
 class TestTournament(unittest.TestCase):
-
+    """Check elimination brackets and tournament input validation."""
     @patch(
         "all_in_randomizer.randomizers.tournament.random.sample",
         side_effect=lambda items, count: list(items),

@@ -1,4 +1,6 @@
 
+"""Tests for chance games and their result summaries."""
+
 import unittest
 from unittest.mock import patch
 
@@ -17,6 +19,7 @@ from all_in_randomizer.randomizers.games import (
 
 
 class TestGachaSimulator(unittest.TestCase):
+    """Cover gacha, slot, roulette, and claw game results and validation."""
 
     def test_default_rates_total_one_hundred(self):
         self.assertEqual(sum(DEFAULT_WEIGHTS), 100)
@@ -187,6 +190,7 @@ class TestGachaSimulator(unittest.TestCase):
             play_claw_machine(DEFAULT_CLAW_PRIZES, 1.5)
 
 class TestThreeCups(unittest.TestCase):
+    """Check the three-cup guess and result validation."""
 
     @patch("all_in_randomizer.randomizers.games.random.randint")
     def test_player_wins_when_guess_matches_ball(self, mock_randint):

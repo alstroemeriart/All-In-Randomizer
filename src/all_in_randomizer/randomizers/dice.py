@@ -1,3 +1,4 @@
+"""Dice rolling helpers, including common game notation."""
 
 import random
 import re

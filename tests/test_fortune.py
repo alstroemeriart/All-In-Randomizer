@@ -1,3 +1,5 @@
+"""Tests for wheel picks, teams, groups, and role assignment."""
+
 import unittest
 from unittest.mock import patch
 
@@ -14,7 +16,7 @@ from all_in_randomizer.randomizers.fortune import (
 
 
 class TestFortune(unittest.TestCase):
-
+    """Check fortune randomizers and their input validation."""
     def test_spin_wheel_selects_an_item(self):
         items = ["Apple", "Banana", "Orange"]
 

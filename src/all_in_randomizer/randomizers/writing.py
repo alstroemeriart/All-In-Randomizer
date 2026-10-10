@@ -1,3 +1,4 @@
+"""Names, prompts, and tabletop character concepts."""
 
 import random
 

@@ -1,3 +1,5 @@
+"""Tournament draws and single- or double-elimination runners."""
+
 import math
 import random
 from collections.abc import Callable
@@ -46,7 +48,11 @@ def generate_tournament_draw(
     participants: list[str],
     tournament_format: str,
 ) -> dict:
-    """Randomize participants and create the opening tournament draw."""
+    """Randomize participants and create the opening tournament draw.
+
+    The first round includes automatic advances when participant count is
+    below the next power of two.
+    """
     _validate_participants(participants)
 
     if not isinstance(tournament_format, str):
@@ -252,6 +258,11 @@ def run_double_elimination(
     participants: list[str],
     match_winners: list[str] | Callable[[str, str, str], str],
 ) -> dict:
+    """Run a bracket with supplied or callback winners.
+
+    A player leaves after two losses; a reset final is played if the losers'
+    bracket champion gives the winners' bracket champion their first loss.
+    """
     _validate_participants(participants)
 
     if not callable(match_winners):
@@ -267,6 +278,7 @@ def run_double_elimination(
         player_2: str,
         stage: str,
     ) -> tuple[dict, str, str]:
+        """Record a match result and update the loser's loss count."""
         nonlocal winner_index
 
         if callable(match_winners):
@@ -297,6 +309,7 @@ def run_double_elimination(
         players: list[str],
         stage: str,
     ) -> tuple[list[str], list[str], list[dict]]:
+        """Pair players, advance winners, and collect defeated players."""
         advancing = []
         defeated = []
         completed_matches = []

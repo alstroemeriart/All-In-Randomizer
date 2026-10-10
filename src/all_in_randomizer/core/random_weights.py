@@ -1,10 +1,15 @@
+"""Weighted random selection helpers."""
 
 import math
 import random
 
 
 def choose_weighted(items: list, weights: list) -> object:
-    """Choose an item according to its relative weight."""
+    """Choose an item according to its relative weight.
+
+    A weight of zero excludes that item; weights need not add up to a set
+    total because only their ratios affect the choice.
+    """
     if not items:
         raise ValueError("Items cannot be empty.")
 

@@ -1,3 +1,5 @@
+"""Validated random number generators shared by the application."""
+
 import math
 import random
 from decimal import Decimal
@@ -59,7 +61,11 @@ def generate_decimal(
     maximum: float,
     decimal_places: int = 2,
 ) -> float:
-    """Generate a decimal within a range and round its precision."""
+    """Generate a rounded decimal within inclusive bounds.
+
+    If ordinary rounding crosses a narrow bound, the nearest representable
+    value at the requested precision is used instead.
+    """
     if (
         isinstance(minimum, bool)
         or not isinstance(minimum, (int, float))
