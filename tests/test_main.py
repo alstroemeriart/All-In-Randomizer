@@ -2,6 +2,8 @@ import unittest
 from unittest.mock import patch
 
 from all_in_randomizer.main import main
+from contextlib import redirect_stdout
+from io import StringIO
 
 
 class TestMain(unittest.TestCase):
@@ -108,6 +110,76 @@ class TestMain(unittest.TestCase):
         )
 
         self.assertIn("You leave roulette with 100 credits.", printed_text)
+
+
+    def run_tournament_cli(self, inputs):
+        output = StringIO()
+
+        with (
+            patch("builtins.input", side_effect=inputs),
+            patch(
+                "all_in_randomizer.randomizers.tournament.random.sample",
+                side_effect=lambda population, k: list(population)[:k],
+            ),
+            redirect_stdout(output),
+        ):
+            main()
+
+        return output.getvalue()
+
+    def test_double_elimination_cli_completes_normally(self):
+        output = self.run_tournament_cli([
+            "6",           # Open Tournament Randomizer
+            "2",           # Select double elimination
+            "Alice, Bob",  # Participants
+            "1",           # Alice wins the Winners Bracket match
+            "1",           # Alice wins the Grand Final
+            "",            # Dismiss the pause
+            "b",           # Return to categories
+            "0",           # Exit
+        ])
+
+        self.assertIn("DOUBLE-ELIMINATION TOURNAMENT COMPLETE", output)
+        self.assertIn("Champion: Alice", output)
+        self.assertIn("Final loss counts:", output)
+        self.assertNotIn("Grand Final Reset", output)
+
+    def test_double_elimination_cli_retries_invalid_winner(self):
+        output = self.run_tournament_cli([
+            "6",
+            "2",
+            "Alice, Bob",
+            "invalid",     # Invalid winner choice
+            "1",           # Retry: Alice wins
+            "1",           # Alice wins the Grand Final
+            "",
+            "b",
+            "0",
+        ])
+
+        self.assertIn(
+            "Invalid winner. Please choose one of the two participants.",
+            output,
+        )
+        self.assertIn("Champion: Alice", output)
+
+    def test_double_elimination_cli_runs_reset_final(self):
+        output = self.run_tournament_cli([
+            "6",           # Open Tournament Randomizer
+            "2",           # Select double elimination
+            "Alice, Bob",  # Participants
+            "1",           # Alice wins the Winners Bracket match
+            "2",           # Bob wins the Grand Final
+            "1",           # Alice wins the Grand Final Reset
+            "",            # Dismiss the pause
+            "b",           # Return to categories
+            "0",           # Exit
+        ])
+
+        self.assertIn("Grand Final Reset", output)
+        self.assertIn("Champion: Alice", output)
+        self.assertIn("Alice: 1 loss(es) — Champion", output)
+        self.assertIn("Bob: 2 loss(es) — Eliminated", output)
 
 
 if __name__ == "__main__":

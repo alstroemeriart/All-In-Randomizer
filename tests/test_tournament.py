@@ -345,7 +345,7 @@ class TestTournament(unittest.TestCase):
                 "Bob": 1,
             },
         )
-        
+
     def test_tournament_rejects_non_list_winners(self):
         with self.assertRaises(TypeError):
             run_single_elimination(
@@ -489,6 +489,117 @@ class TestTournament(unittest.TestCase):
                     )
                 )
 
+
+
+    def test_eliminated_participant_never_returns_to_a_match(self):
+        participants = ["Alice", "Bob", "Charlie", "Diana", "Eve"]
+
+        with patch(
+            "all_in_randomizer.randomizers.tournament.random.sample",
+            side_effect=lambda population, k: list(population)[:k],
+        ):
+            result = run_double_elimination(
+                participants,
+                lambda player_1, player_2, stage: player_1,
+            )
+
+        losses = {participant: 0 for participant in participants}
+
+        # Flatten the rounds into individual matches.
+        for round_matches in result["rounds"]:
+            for match in round_matches:
+                player_1 = match["participant_1"]
+                player_2 = match["participant_2"]
+                winner = match["winner"]
+
+                # A bye must not create a loss.
+                if match["bye"]:
+                    self.assertNotEqual(winner, BYE)
+                    self.assertIn(winner, (player_1, player_2))
+                    continue
+
+                # Neither participant may enter a match after two losses.
+                self.assertLess(
+                    losses[player_1],
+                    2,
+                    f"{player_1} returned after being eliminated.",
+                )
+                self.assertLess(
+                    losses[player_2],
+                    2,
+                    f"{player_2} returned after being eliminated.",
+                )
+
+                loser = match["loser"]
+                self.assertIn(loser, (player_1, player_2))
+                self.assertNotEqual(loser, winner)
+
+                losses[loser] += 1
+
+        self.assertEqual(result["losses"], losses)
+        self.assertLess(losses[result["champion"]], 2)
+        self.assertTrue(
+            all(
+                losses[player] == 2
+                for player in participants
+                if player != result["champion"]
+            )
+        )
+
+
+
+
+    def test_five_participant_bracket_handles_initial_byes_correctly(self):
+        participants = ["Alice", "Bob", "Charlie", "Diana", "Eve"]
+
+        with patch(
+            "all_in_randomizer.randomizers.tournament.random.sample",
+            side_effect=lambda population, k: list(population)[:k],
+        ):
+            result = run_double_elimination(
+                participants,
+                lambda player_1, player_2, stage: player_1,
+            )
+
+        # Flatten the rounds before filtering individual matches.
+        all_matches = [
+            match
+            for round_matches in result["rounds"]
+            for match in round_matches
+        ]
+
+        initial_winners_matches = [
+            match
+            for match in all_matches
+            if match["stage"] == "Winners Bracket"
+        ]
+
+        initial_byes = [
+            match
+            for match in initial_winners_matches
+            if match["bye"]
+        ]
+
+        self.assertEqual(len(initial_byes), 3)
+
+        for match in initial_byes:
+            self.assertIn(match["winner"], participants)
+            self.assertEqual(
+                match["winner"],
+                match["participant_1"]
+                if match["participant_2"] == BYE
+                else match["participant_2"],
+            )
+
+        # The full tournament must finish with exactly one champion.
+        self.assertIn(result["champion"], participants)
+
+        # Every non-champion must have been eliminated with two losses.
+        for participant, loss_count in result["losses"].items():
+            if participant == result["champion"]:
+                self.assertLess(loss_count, 2)
+            else:
+                self.assertEqual(loss_count, 2)
 
 
 if __name__ == "__main__":
