@@ -1,5 +1,4 @@
-
-# Python cache and compiled files
+# Python bytecode and cache files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -9,19 +8,20 @@ __pycache__/
 venv/
 env/
 
-# Build and package artifacts
+# Build and packaging artifacts
 build/
 dist/
 *.egg-info/
+.eggs/
 
-# Test and tool caches
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
+# Test and coverage artifacts
 .coverage
+.coverage.*
 htmlcov/
+.pytest_cache/
 
-# Environment variables and secrets
-.env
-.env.*
-!.env.example
+# Editor and operating system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

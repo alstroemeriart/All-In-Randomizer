@@ -124,10 +124,4 @@ Legend:
 - [x] Customizable randomizer
 - [x] Calculator
 
-## Remaining work
-
-The following seven features are not yet implemented:
-
-1.
-
 Do not treat this list as permission to change the established scope. Update a feature's checkbox only after implementation and testing have been verified.

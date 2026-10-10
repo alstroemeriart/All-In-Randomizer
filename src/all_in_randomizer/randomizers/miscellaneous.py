@@ -1,15 +1,12 @@
 """Miscellaneous randomizers for All-in Randomizer."""
 
 import ast
+import math
 import operator
 import random
 from datetime import datetime, timedelta
 from typing import Any
 
-
-# ---------------------------------------------------------
-# 1. RANDOM DATE/TIME PICKER
-# ---------------------------------------------------------
 
 def generate_random_datetime(
     start: datetime,
@@ -26,6 +23,7 @@ def generate_random_datetime(
         raise ValueError("Start datetime cannot be after end datetime.")
 
     duration = end - start
+    # Work in microseconds so both endpoints can be selected exactly.
     total_microseconds = (
         (duration.days * 86400 + duration.seconds) * 1_000_000
         + duration.microseconds
@@ -34,10 +32,6 @@ def generate_random_datetime(
     offset = random.randint(0, total_microseconds)
     return start + timedelta(microseconds=offset)
 
-
-# ---------------------------------------------------------
-# 2. RANDOM COUNTRY/CITY/REGION PICKER
-# ---------------------------------------------------------
 
 # This is an editable starter dataset, not a complete world database.
 # Add more countries, regions, and cities as needed.
@@ -129,10 +123,6 @@ def pick_random_location(level: str) -> dict[str, str]:
     raise ValueError("Level must be 'country', 'region', or 'city'.")
 
 
-# ---------------------------------------------------------
-# 3. FLASHCARDS
-# ---------------------------------------------------------
-
 def check_flashcard_answers(
     flashcards: list[tuple[str, str]],
     answers: list[str],
@@ -180,10 +170,6 @@ def check_flashcard_answers(
     }
 
 
-# ---------------------------------------------------------
-# 4. CUSTOMIZABLE RANDOMIZER
-# ---------------------------------------------------------
-
 def choose_custom_items(
     items: list[str],
     count: int = 1,
@@ -221,6 +207,7 @@ def choose_custom_items(
     remaining_weights = [float(weight) for weight in weights]
     selected = []
 
+    # Remove each selected item so weighted picks cannot repeat.
     for _ in range(count):
         if sum(remaining_weights) <= 0:
             raise ValueError(
@@ -241,10 +228,6 @@ def choose_custom_items(
     return selected
 
 
-# ---------------------------------------------------------
-# 5. SAFE CALCULATOR
-# ---------------------------------------------------------
-
 _BINARY_OPERATORS = {
     ast.Add: operator.add,
     ast.Sub: operator.sub,
@@ -262,7 +245,7 @@ _UNARY_OPERATORS = {
 
 
 def calculate(expression: str) -> int | float:
-    """Evaluate basic arithmetic without eval().
+    """Evaluate supported arithmetic using an explicit AST allowlist.
 
     Supported: +, -, *, /, //, %, **, parentheses, and unary +/-
     """
@@ -302,7 +285,6 @@ def calculate(expression: str) -> int | float:
             result = operation(left, right)
 
             if isinstance(result, float):
-                import math
                 if not math.isfinite(result):
                     raise ValueError("The result is too large to calculate.")
 

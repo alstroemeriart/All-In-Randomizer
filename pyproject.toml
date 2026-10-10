@@ -5,9 +5,36 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "all-in-randomizer"
 version = "0.1.0"
-description = "A modular randomization toolkit"
+description = "A silly little all-in-one collection of randomizers, generators, and minigames."
+readme = "README.md"
 requires-python = ">=3.12"
 dependencies = []
+
+authors = [
+    { name = "alstroemeriart" }
+]
+
+keywords = [
+    "all-in-randomizer",
+    "randomizer",
+    "randomization",
+    "games",
+    "generators",
+    "dice",
+    "cards",
+    "creative-tools",
+    "python"
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Games/Entertainment",
+    "Topic :: Utilities"
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

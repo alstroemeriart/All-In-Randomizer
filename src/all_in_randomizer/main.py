@@ -107,7 +107,7 @@ from all_in_randomizer.randomizers.social import (
     assign_mafia_roles,
 )
 
-# Each category lists only the randomizers that are implemented so far.
+# Category and option labels displayed by the CLI.
 CATEGORIES = {
     "1": ("Dice and Coins", [
         ("1", "Roll a standard die (d4 to d100)"),
@@ -201,7 +201,10 @@ CATEGORIES = {
 
 
 def read_comma_separated_items(prompt: str) -> list[str]:
-    """Read a comma-separated list and reject missing items."""
+    """Read a comma-separated list and reject missing items.
+
+    Trimming each entry keeps accidental spaces from becoming part of a name.
+    """
     raw_value = input(prompt)
     items = [item.strip() for item in raw_value.split(",")]
     if not items or any(not item for item in items):
@@ -217,7 +220,11 @@ def _ask_yes_no(prompt: str) -> bool:
 
 
 def _run_randomizer(category: str, option: str) -> None:
-    """Run one selected randomizer and print its result."""
+    """Run the selected option for a category.
+
+    This function handles CLI input and display; randomization logic lives in
+    the randomizer modules.
+    """
     # DICE AND COINS
     if category == "1":
         if option == "1":
@@ -446,8 +453,6 @@ def _run_randomizer(category: str, option: str) -> None:
             for participant, role in assign_roles(participants, roles).items():
                 print(f"{participant}: {role}")
 
-        # TOURNAMENT RANDOMIZER
-    
     # TOURNAMENT RANDOMIZER
     elif category == "6":
         if option == "1":
@@ -1257,8 +1262,13 @@ def _run_randomizer(category: str, option: str) -> None:
                 except (ValueError, TypeError) as error:
                     print(f"Calculation error: {error}")
 
+
 def main() -> None:
-    """Run the category-based All-in Randomizer command-line menu."""
+    """Run the category and option menus until the user exits.
+
+    Input errors return to the active menu so one invalid choice does not
+    close the program.
+    """
     print("Welcome to All-in Randomizer!")
 
     while True:
