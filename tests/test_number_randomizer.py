@@ -6,6 +6,7 @@ from all_in_randomizer.randomizers.numbers import (
     generate_numeric_string,
     generate_fraction,
     generate_coordinate,
+    generate_phone_number,
 )
 
 
@@ -94,6 +95,53 @@ class TestNumberRandomizers(unittest.TestCase):
     def test_coordinate_rejects_excessive_precision(self):
         with self.assertRaises(ValueError):
             generate_coordinate(11)
+
+    
+    def test_phone_number_uses_default_pattern(self):
+        result = generate_phone_number()
+
+        self.assertEqual(len(result), 14)
+        self.assertEqual(result[0], "(")
+        self.assertEqual(result[4:6], ") ")
+        self.assertEqual(result[9], "-")
+
+        digits = "".join(character for character in result if character.isdigit())
+        self.assertEqual(len(digits), 10)
+
+    def test_phone_number_preserves_custom_format(self):
+        result = generate_phone_number("+63 9## ### ####")
+
+        self.assertEqual(len(result), len("+63 9## ### ####"))
+        self.assertTrue(result.startswith("+63 9"))
+
+        digits = "".join(character for character in result if character.isdigit())
+        self.assertEqual(len(digits), 12)
+
+    def test_phone_number_preserves_leading_zeroes(self):
+        from unittest.mock import patch
+
+        with patch(
+            "all_in_randomizer.randomizers.numbers.random.randint",
+            side_effect=[0, 0, 4],
+        ):
+            self.assertEqual(generate_phone_number("###"), "004")
+
+    def test_phone_number_rejects_non_string_pattern(self):
+        with self.assertRaises(TypeError):
+            generate_phone_number(12345)
+
+    def test_phone_number_rejects_empty_pattern(self):
+        with self.assertRaises(ValueError):
+            generate_phone_number("")
+
+    def test_phone_number_requires_placeholder(self):
+        with self.assertRaises(ValueError):
+            generate_phone_number("(123) 456-7890")
+
+    def test_phone_number_rejects_unsupported_characters(self):
+        with self.assertRaises(ValueError):
+            generate_phone_number("ABC-###")
+
 
 
 if __name__ == "__main__":

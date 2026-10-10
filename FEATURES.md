@@ -38,7 +38,7 @@ Legend:
 - [x] Fractions
 - [x] Odd/even generator
 - [x] Random numeric strings
-- [ ] Phone-number-like formats
+- [x] Phone-number-like formats
 - [x] Coordinate generator
 
 ## 3. Graphics

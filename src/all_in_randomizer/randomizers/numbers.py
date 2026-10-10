@@ -29,6 +29,41 @@ def generate_numeric_string(length: int) -> str:
     return "".join(str(random.randint(0, 9)) for _ in range(length))
 
 
+def generate_phone_number(pattern: str = "(###) ###-####") -> str:
+    """Generate a phone-number-like string from a customizable pattern.
+
+    Each '#' is replaced with a random digit from 0 to 9.
+    Other supported characters are preserved as written.
+
+    Examples:
+        "(###) ###-####" -> "(415) 203-7891"
+        "+63 9## ### ####" -> "+63 912 345 6789"
+        "###-###" -> "042-817"
+    """
+    if not isinstance(pattern, str):
+        raise TypeError("Pattern must be a string.")
+
+    if not pattern:
+        raise ValueError("Pattern cannot be empty.")
+
+    if "#" not in pattern:
+        raise ValueError("Pattern must contain at least one '#' placeholder.")
+
+    allowed_characters = set("#0123456789()+-. ")
+
+    if any(character not in allowed_characters for character in pattern):
+        raise ValueError(
+            "Pattern may contain only digits, '#', spaces, '+', "
+            "'-', '.', and parentheses."
+        )
+
+    return "".join(
+        str(random.randint(0, 9)) if character == "#" else character
+        for character in pattern
+    )
+
+
+
 def generate_fraction(
     minimum_numerator: int,
     maximum_numerator: int,

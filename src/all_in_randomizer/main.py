@@ -25,6 +25,7 @@ from all_in_randomizer.randomizers.numbers import (
     generate_fraction,
     generate_coordinate,
     generate_range_number,
+    generate_phone_number,
 )
 from all_in_randomizer.randomizers.graphics import (
     generate_hex_color,
@@ -118,6 +119,7 @@ CATEGORIES = {
         ("7", "Generate a fraction"),
         ("8", "Generate random coordinates"),
         ("9", "Generate a number within a range"),
+        ("10", "Generate a phone-number-like format"),
     ]),
     "3": ("Graphics", [
         ("1", "Generate a hex color"),
@@ -278,6 +280,18 @@ def _run_randomizer(category: str, option: str) -> None:
             print("2. All integers")
             print("3. Decimal numbers")
             print("4. Fractions")
+        elif option == "10":
+            pattern = input(
+                "Enter a format using # for random digits "
+                "(Enter for default (###) ###-####): "
+            ).strip()
+
+            if not pattern:
+                pattern = "(###) ###-####"
+
+            print(f"Generated phone-number-like string: "
+                  f"{generate_phone_number(pattern)}")
+
 
             mode_choice = input("Choose a mode: ").strip()
 
