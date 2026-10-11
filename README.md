@@ -1,6 +1,6 @@
 # All-in Randomizer
 
--# made by yours truly, *alstroemeriart*, the rattiest ever
+made by yours truly, *alstroemeriart*, the rattiest ever
 
 ## One app yet endless possibilities
 
